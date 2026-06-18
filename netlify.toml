@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/smhi-proxy/*"
+  to = "https://opendata-download-metfcst.smhi.se/:splat"
+  status = 200
+  force = true
