@@ -1,0 +1,7 @@
+name = "hydransva"
+compatibility_date = "2025-06-01"
+main = "worker.js"
+
+[assets]
+directory = "."
+binding = "ASSETS"
