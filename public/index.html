@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSVA Driftövervakning</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/map.css">
+<link rel="stylesheet" href="css/motion.css">
+<style>x-dc{display:none!important}</style>
+<script defer src="vendor/react.production.min.js"></script>
+<script defer src="vendor/react-dom.production.min.js"></script>
+<script defer src="vendor/leaflet/leaflet.js"></script>
+<script defer src="data/kommuner.js"></script>
+<script defer src="data/kunskap.js"></script>
+<script>
+  // The dashboard is a dc-runtime component: app/view.html is its template, app/logic.js its logic.
+  // Both are fetched right away, dropped into <x-dc> once the deferred scripts above have run,
+  // and then dc-runtime renders them. (__resources set = React is local, no CDN or page re-fetch.)
+  window.__resources = {};
+  var dcFiles = Promise.all(['app/view.html', 'app/logic.js'].map(function (u) {
+    return fetch(u).then(function (r) {
+      if (!r.ok) throw new Error(u + ' ' + r.status);
+      return r.text();
+    });
+  }));
+  document.addEventListener('DOMContentLoaded', function () {
+    dcFiles.then(function (f) {
+      // parse off-page first so the browser doesn't validate {{placeholders}} in SVG attributes
+      var view = new DOMParser().parseFromString('<x-dc>' + f[0] + '</x-dc>', 'text/html').querySelector('x-dc');
+      document.querySelector('x-dc').replaceWith(document.adoptNode(view));
+      document.querySelector('script[data-dc-script]').textContent = f[1];
+      var s = document.createElement('script');
+      s.src = 'vendor/dc-runtime.js';
+      document.head.appendChild(s);
+    }).catch(function (err) {
+      console.error(err);
+      document.body.textContent = 'Kunde inte ladda Hydra: ' + err.message;
+    });
+  });
+</script>
+</head>
+<body>
+<x-dc></x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:900},&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Cyan&quot;,&quot;Teal&quot;,&quot;Blå&quot;],&quot;default&quot;:&quot;Cyan&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showWeatherRadar&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;liveData&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;useSmhi&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;copilotEndpoint&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}"></script>
+</body>
+</html>

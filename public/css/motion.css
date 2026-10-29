@@ -1,0 +1,144 @@
+/* ===== Motion — overlays open/close, widget cards, smoother hovers =====
+   Classes are set in app/view.html; exits use .mo-out, added by leave() in app/logic.js for 200 ms before unmount. */
+:root{--mo-ease:cubic-bezier(.2,.9,.25,1);--mo-ease-in:cubic-bezier(.5,0,.9,.4)}
+
+/* every style-hover element (dc-runtime gives them scp* classes) eases instead of snapping, and dips when pressed */
+[class^="scp"],[class*=" scp"]{transition:color .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .22s ease,transform .22s var(--mo-ease),filter .18s ease}
+[class^="scp"]:active,[class*=" scp"]:active{transform:scale(.97);filter:brightness(1.15);transition-duration:.06s}
+
+/* ---- widget cards: lift, accent edge, light sweep, press ---- */
+.mo-card:hover{transform:translateY(-3px)}
+.mo-card:active{transform:translateY(-1px) scale(.985);transition-duration:.08s}
+.mo-card > div{transition:border-color .25s ease,box-shadow .3s ease}
+.mo-card:hover > div{border-color:rgba(var(--acg,53,214,242),.42)!important;box-shadow:inset 0 1px 0 rgba(150,230,245,.12),0 18px 46px rgba(0,0,0,.5),0 0 26px rgba(var(--acg,53,214,242),.13)!important}
+.mo-card > div::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(105deg,transparent 38%,rgba(var(--acg,53,214,242),.1) 50%,transparent 62%) 130% 0/260% 100% no-repeat}
+.mo-card:hover > div::after{animation:moSheen 1s var(--mo-ease) forwards}
+@keyframes moSheen{0%{opacity:1;background-position:130% 0}100%{opacity:1;background-position:-30% 0}}
+
+/* ---- backdrops ---- */
+.mo-backdrop{animation:moFadeIn .3s ease both}
+.mo-backdrop.mo-out{animation:moFadeOut .2s ease forwards}
+@keyframes moFadeIn{from{opacity:0}}
+@keyframes moFadeOut{to{opacity:0}}
+
+/* ---- widget detail: grows out of the clicked card (--fx/--fy/--fs from zoomFrom()), shrinks back on close ---- */
+.mo-zoom{animation:moZoomIn .46s var(--mo-ease) both}
+.mo-zoom.mo-out{animation:moZoomOut .2s var(--mo-ease-in) forwards}
+@keyframes moZoomIn{
+  0%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,0px))) scale(var(--fs,.92))}
+  35%{opacity:1}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes moZoomOut{to{opacity:0;transform:translate(calc(-50% + var(--fx,0px) * .5),calc(-50% + var(--fy,0px) * .5)) scale(.9)}}
+
+/* ---- other centred modals (underlag, regnradar, regnmätare) ---- */
+.mo-pop{animation:moPopIn .34s var(--mo-ease) both}
+.mo-pop.mo-out{animation:moPopOut .2s var(--mo-ease-in) forwards}
+@keyframes moPopIn{from{opacity:0;transform:translate(-50%,-47%) scale(.95)}}
+@keyframes moPopOut{to{opacity:0;transform:translate(-50%,-49%) scale(.96)}}
+
+/* ---- settings drops from the gear, chat rises from its bar, popover rises ---- */
+.mo-drop{transform-origin:top right;animation:moDropIn .3s var(--mo-ease) both}
+.mo-drop.mo-out{animation:moDropOut .18s var(--mo-ease-in) forwards}
+@keyframes moDropIn{from{opacity:0;transform:translateY(-10px) scale(.96)}}
+@keyframes moDropOut{to{opacity:0;transform:translateY(-8px) scale(.97)}}
+.mo-rise-br{transform-origin:bottom right;animation:moRiseBr .32s var(--mo-ease) both}
+@keyframes moRiseBr{from{opacity:0;transform:translateY(14px) scale(.96)}}
+.mo-rise-x{animation:moRiseX .3s var(--mo-ease) both}
+@keyframes moRiseX{from{opacity:0;transform:translate(-50%,12px)}}
+
+/* ---- start menu: content rises in, everything lifts away when a view is picked ---- */
+.mo-menu{animation:moFadeIn .35s ease both}
+.mo-menu.mo-out{animation:moMenuOut .2s var(--mo-ease-in) forwards;pointer-events:none}
+@keyframes moMenuOut{to{opacity:0;transform:scale(1.04)}}
+
+/* ---- staggered content ---- */
+.mo-stagger > *{animation:moRise .5s var(--mo-ease) both}
+@keyframes moRise{from{opacity:0;transform:translateY(12px)}}
+.mo-stagger-lg > *{animation-duration:.6s}
+.mo-row{animation:moRise .42s var(--mo-ease) both}
+.mo-slide-in{animation:moSlideIn .4s var(--mo-ease) both}
+@keyframes moSlideIn{from{opacity:0;transform:translateX(24px)}}
+.mo-stagger > :nth-child(1){animation-delay:85ms}
+.mo-stagger > :nth-child(2){animation-delay:130ms}
+.mo-stagger > :nth-child(3){animation-delay:175ms}
+.mo-stagger > :nth-child(4){animation-delay:220ms}
+.mo-stagger > :nth-child(5){animation-delay:265ms}
+.mo-stagger > :nth-child(6){animation-delay:310ms}
+.mo-stagger > :nth-child(7){animation-delay:355ms}
+.mo-stagger > :nth-child(8){animation-delay:400ms}
+.mo-stagger > :nth-child(9){animation-delay:445ms}
+.mo-stagger > :nth-child(10){animation-delay:490ms}
+.mo-stagger > :nth-child(11){animation-delay:535ms}
+.mo-stagger > :nth-child(12){animation-delay:580ms}
+.mo-stagger-lg > :nth-child(1){animation-delay:210ms}
+.mo-stagger-lg > :nth-child(2){animation-delay:300ms}
+.mo-stagger-lg > :nth-child(3){animation-delay:390ms}
+.mo-stagger-late > :nth-child(1){animation-delay:230ms}
+.mo-stagger-late > :nth-child(2){animation-delay:300ms}
+.mo-stagger-late > :nth-child(3){animation-delay:370ms}
+.mo-stagger-late > :nth-child(4){animation-delay:440ms}
+.mo-stagger-late > :nth-child(5){animation-delay:510ms}
+.mo-stagger-late > :nth-child(6){animation-delay:580ms}
+.mo-row:nth-child(1){animation-delay:210ms}
+.mo-row:nth-child(2){animation-delay:240ms}
+.mo-row:nth-child(3){animation-delay:270ms}
+.mo-row:nth-child(4){animation-delay:300ms}
+.mo-row:nth-child(5){animation-delay:330ms}
+.mo-row:nth-child(6){animation-delay:360ms}
+.mo-row:nth-child(7){animation-delay:390ms}
+.mo-row:nth-child(8){animation-delay:420ms}
+.mo-row:nth-child(9){animation-delay:450ms}
+.mo-row:nth-child(10){animation-delay:480ms}
+.mo-row:nth-child(11){animation-delay:510ms}
+.mo-row:nth-child(12){animation-delay:540ms}
+.mo-row:nth-child(13){animation-delay:570ms}
+.mo-row:nth-child(14){animation-delay:600ms}
+.mo-row:nth-child(15){animation-delay:630ms}
+.mo-row:nth-child(16){animation-delay:660ms}
+
+/* ---- bar charts grow from the baseline; live updates glide ---- */
+.mo-bars > * > :first-child,.mo-bars-flat > *{transform-origin:bottom;animation:moGrow .55s var(--mo-ease) both;transition:height .5s var(--mo-ease)}
+.mo-bars-flat > * > :first-child{animation:none}
+@keyframes moGrow{from{transform:scaleY(0)}}
+.mo-bars > :nth-child(1), .mo-bars > :nth-child(1) > :first-child{animation-delay:138ms}
+.mo-bars > :nth-child(2), .mo-bars > :nth-child(2) > :first-child{animation-delay:156ms}
+.mo-bars > :nth-child(3), .mo-bars > :nth-child(3) > :first-child{animation-delay:174ms}
+.mo-bars > :nth-child(4), .mo-bars > :nth-child(4) > :first-child{animation-delay:192ms}
+.mo-bars > :nth-child(5), .mo-bars > :nth-child(5) > :first-child{animation-delay:210ms}
+.mo-bars > :nth-child(6), .mo-bars > :nth-child(6) > :first-child{animation-delay:228ms}
+.mo-bars > :nth-child(7), .mo-bars > :nth-child(7) > :first-child{animation-delay:246ms}
+.mo-bars > :nth-child(8), .mo-bars > :nth-child(8) > :first-child{animation-delay:264ms}
+.mo-bars > :nth-child(9), .mo-bars > :nth-child(9) > :first-child{animation-delay:282ms}
+.mo-bars > :nth-child(10), .mo-bars > :nth-child(10) > :first-child{animation-delay:300ms}
+.mo-bars > :nth-child(11), .mo-bars > :nth-child(11) > :first-child{animation-delay:318ms}
+.mo-bars > :nth-child(12), .mo-bars > :nth-child(12) > :first-child{animation-delay:336ms}
+.mo-bars > :nth-child(13), .mo-bars > :nth-child(13) > :first-child{animation-delay:354ms}
+.mo-bars > :nth-child(14), .mo-bars > :nth-child(14) > :first-child{animation-delay:372ms}
+.mo-bars > :nth-child(15), .mo-bars > :nth-child(15) > :first-child{animation-delay:390ms}
+.mo-bars > :nth-child(16), .mo-bars > :nth-child(16) > :first-child{animation-delay:408ms}
+.mo-bars > :nth-child(17), .mo-bars > :nth-child(17) > :first-child{animation-delay:426ms}
+.mo-bars > :nth-child(18), .mo-bars > :nth-child(18) > :first-child{animation-delay:444ms}
+.mo-bars > :nth-child(19), .mo-bars > :nth-child(19) > :first-child{animation-delay:462ms}
+.mo-bars > :nth-child(20), .mo-bars > :nth-child(20) > :first-child{animation-delay:480ms}
+.mo-bars > :nth-child(21), .mo-bars > :nth-child(21) > :first-child{animation-delay:498ms}
+.mo-bars > :nth-child(22), .mo-bars > :nth-child(22) > :first-child{animation-delay:516ms}
+.mo-bars > :nth-child(23), .mo-bars > :nth-child(23) > :first-child{animation-delay:534ms}
+.mo-bars > :nth-child(24), .mo-bars > :nth-child(24) > :first-child{animation-delay:552ms}
+.mo-bars > :nth-child(25), .mo-bars > :nth-child(25) > :first-child{animation-delay:570ms}
+.mo-bars > :nth-child(26), .mo-bars > :nth-child(26) > :first-child{animation-delay:588ms}
+.mo-bars > :nth-child(27), .mo-bars > :nth-child(27) > :first-child{animation-delay:606ms}
+.mo-bars > :nth-child(28), .mo-bars > :nth-child(28) > :first-child{animation-delay:624ms}
+.mo-bars > :nth-child(29), .mo-bars > :nth-child(29) > :first-child{animation-delay:642ms}
+.mo-bars > :nth-child(30), .mo-bars > :nth-child(30) > :first-child{animation-delay:660ms}
+.mo-bars > :nth-child(31), .mo-bars > :nth-child(31) > :first-child{animation-delay:678ms}
+.mo-bars > :nth-child(32), .mo-bars > :nth-child(32) > :first-child{animation-delay:696ms}
+.mo-bars > :nth-child(33), .mo-bars > :nth-child(33) > :first-child{animation-delay:714ms}
+.mo-bars > :nth-child(34), .mo-bars > :nth-child(34) > :first-child{animation-delay:732ms}
+.mo-bars > :nth-child(35), .mo-bars > :nth-child(35) > :first-child{animation-delay:750ms}
+.mo-bars > :nth-child(36), .mo-bars > :nth-child(36) > :first-child{animation-delay:768ms}
+
+@media (prefers-reduced-motion:reduce){
+  .mo-backdrop,.mo-zoom,.mo-pop,.mo-drop,.mo-rise-br,.mo-rise-x,.mo-menu,.mo-stagger > *,.mo-row,.mo-slide-in,.mo-bars > *,.mo-bars > * > :first-child,.mo-card > div::after{animation:none!important}
+  .mo-out{opacity:0!important}
+  .mo-card:hover,.mo-card:active{transform:none}
+}
