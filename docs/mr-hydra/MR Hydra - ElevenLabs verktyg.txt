@@ -1,0 +1,200 @@
+MR. HYDRA – VERKTYG I ELEVENLABS
+Alla verktyg ska vara av typen Client och ha "Wait for response" ibockad.
+Name ska skrivas exakt som nedan (samma stora och små bokstäver).
+Parametrar markerade (valfri) ska INTE ha Required ibockat.
+
+========================================
+LÄSA LÄGET
+========================================
+
+getDashboardState
+Beskrivning: Hämtar hela läget just nu: regn, väder, havsvattenstånd, larm, AI-notiser och alla kommuner.
+Parametrar: inga
+
+getRainForecast
+Beskrivning: Hämtar max regn per timme från -12 till +12 timmar och eventuell skyfallsvarning.
+Parametrar: inga
+
+getWeather
+Beskrivning: Hämtar väder och vind just nu.
+Parametrar: inga
+
+getAlarms
+Beskrivning: Hämtar alla aktiva larm.
+Parametrar: inga
+
+getMunicipality
+Beskrivning: Hämtar läget i en kommun.
+Parametrar:
+- kommun (string) – Helsingborg, Landskrona, Båstad, Bjuv, Åstorp, Svalöv, Örkelljunga eller Perstorp
+
+getScreenState
+Beskrivning: Läser av vad som visas på skärmen just nu: vy, öppen widget, vald kommun, reglagets timme, kartlager.
+Parametrar: inga
+
+========================================
+WIDGETS
+========================================
+
+openWidget
+Beskrivning: Öppnar detaljvyn för en widget. Fungerar för alla widgets, även de som inte syns i den aktuella vyn.
+Parametrar:
+- widget (string) – en av: Flödesmätare, Dricksvatten, Spillvatten, Dagvatten, Havsvattenstånd, Väderradar, Prognoser, AI-notiser, Aktiva alarm, Anmälningar
+
+closeWidget
+Beskrivning: Stänger den öppna detaljvyn.
+Parametrar: inga
+
+openWidgetForMunicipality
+Beskrivning: Öppnar en widget filtrerad på en kommun, till exempel dagvatten i Bjuv.
+Parametrar:
+- widget (string) – samma namn som i openWidget
+- kommun (string) – kommunens namn
+
+showWidget
+Beskrivning: Lägger till eller tar bort en widget i den aktuella vyn.
+Parametrar:
+- widget (string) – samma namn som i openWidget
+- on (boolean) – true = visa, false = dölj
+
+========================================
+KARTA OCH TID
+========================================
+
+setForecastHour
+Beskrivning: Flyttar tidsreglaget och visar regnet på kartan. Negativa timmar = uppmätt historik, positiva = prognos.
+Parametrar:
+- timmar (number) – från -12 till 12
+
+playForecast
+Beskrivning: Spelar upp regnet timme för timme på kartan.
+Parametrar:
+- fran (number) – starttimme, -12 till 12
+- till (number) – sluttimme, -12 till 12
+
+toggleLayer
+Beskrivning: Visar eller döljer ett kartlager.
+Parametrar:
+- lager (string) – skyfall, vind, regnmätare, radartäckning, anmälningar eller larm
+- on (boolean, valfri) – true = visa, false = dölj
+
+setMapVersion
+Beskrivning: Byter kartversion för regnet.
+Parametrar:
+- version (string) – 1 eller 2
+
+zoomMap
+Beskrivning: Zoomar kartan in eller ut, eller visar hela området igen.
+Parametrar:
+- riktning (string) – in, ut eller hela
+
+drillTo
+Beskrivning: Zoomar in på en kommun och visar dess anläggningar.
+Parametrar:
+- kommun (string) – kommunens namn
+
+openStation
+Beskrivning: Öppnar en anläggning, till exempel ett reningsverk eller vattenverk.
+Parametrar:
+- station (string) – vattenverk, reningsverk, pumpstation eller reservoar
+- kommun (string, valfri) – kommunens namn
+
+setReportsScope
+Beskrivning: Visar aktuella eller alla anmälningar om översvämning på kartan.
+Parametrar:
+- urval (string) – aktuella eller alla
+
+========================================
+NAVIGERING
+========================================
+
+setView
+Beskrivning: Byter vy.
+Parametrar:
+- vy (string) – hydra, skyfall, produktion eller meny
+
+goBack
+Beskrivning: Går ett steg tillbaka.
+Parametrar: inga
+
+closeAll
+Beskrivning: Stänger allt som är öppet.
+Parametrar: inga
+
+openSettings
+Beskrivning: Öppnar inställningarna.
+Parametrar:
+- flik (string) – widgets eller info
+
+openInfo
+Beskrivning: Visar en förklaring under Datakällor & metod.
+Parametrar:
+- amne (string) – återkomsttid, korrektion, radar, regnmätare, prognos, hav eller live-status
+
+showScaleInfo
+Beskrivning: Visar hur färgskalan och återkomsttiden räknas.
+Parametrar: inga
+
+setDesign
+Beskrivning: Byter utseende.
+Parametrar:
+- design (string) – 1 eller 2
+
+toggleFullscreen
+Beskrivning: Slår på eller av helskärm.
+Parametrar: inga
+
+pressButton
+Beskrivning: Reserv: trycker på en synlig knapp med given text när inget annat verktyg passar.
+Parametrar:
+- text (string) – knappens text
+
+========================================
+VISA OCH GUIDA
+========================================
+
+highlight
+Beskrivning: Markerar en del av skärmen med en lysande ram.
+Parametrar:
+- del (string) – karta, reglage, kartlager, live, inställningar, chatt eller ett widgetnamn
+- etikett (string, valfri) – text som visas vid ramen
+
+clearHighlight
+Beskrivning: Tar bort markeringen.
+Parametrar: inga
+
+tourStep
+Beskrivning: Guidad genomgång, ett steg i taget. Anpassas efter vyn användaren står i: i Skyfallsvyn går den igenom Skyfallsvyn och dess widgets. Svaret innehåller texten att berätta och hur många steg som finns totalt.
+Parametrar:
+- steg (number) – stegnummer, börja på 1
+
+endTour
+Beskrivning: Avslutar genomgången och stänger allt.
+Parametrar: inga
+
+========================================
+LÄGG TILL I SYSTEMPROMPTEN
+========================================
+
+När användaren ber om en genomgång: anropa tourStep med steg 1 i den vy användaren står i, byt aldrig vy själv innan. Läs upp texten i "berätta" och fortsätt med nästa steg tills "totalt" är nått. Fråga kort efter några steg om användaren vill fortsätta.
+När användaren nämner en widget, även en som inte syns i vyn, använd openWidget med widgetens namn.
+Använd highlight för att peka på det du pratar om och getScreenState om du är osäker på vad som visas.
+
+
+----------------------------------------
+VERKTYG: getRainOutlook
+Typ: Client tool · Vänta på svar: JA · Inga parametrar
+Beskrivning: Hämtar Hydras samlade nederbördsläge: varning just nu och framåt (nivå, rubrik, kommun, om hur många timmar), ackumulerat regn sedan regnets start och till +12 h, återkomsttid enligt Dahlström 2010 per varaktighet (1, 3, 6, 12 h), berörda kommuner, havsvattenstånd och SMHI:s officiella varningar. Använd alltid detta verktyg när användaren frågar om regn, skyfall, risker, varningar eller vad driften bör göra. Siffrorna är Hydras egen beräkning – ändra dem aldrig, tolka dem.
+
+----------------------------------------
+VERKTYG: getRainGauges
+Typ: Client tool · Vänta på svar: JA · Inga parametrar
+Beskrivning: Alla regnmätare (SMHI, Försvarsmakten, DMI) med närmaste kommun, senaste timmen, summor 3/6/12/24 h, blötaste timmen, saknade timmar och högsta återkomsttid senaste dygnet enligt Dahlström 2010. Samma värden som regnmätarwidgeten och kartlagret.
+
+----------------------------------------
+VERKTYG: getGaugeDetail
+Typ: Client tool · Vänta på svar: JA
+Parametrar:
+- namn (string, obligatorisk): regnmätarens namn, t.ex. "Helsingborg A"
+- dagar (number, valfri): hur långt bak historiken ska gå, 1–120, standard 7
+Beskrivning: Öppnar regnmätarens detaljvy på skärmen och returnerar samma data som vyn: nuvarande värden och historik per dag (summa, största timme, saknade timmar och högsta återkomsttid enligt Dahlström 2010). SMHI- och Försvarsmaktsmätare har ungefär fyra månaders historik, DMI bara senaste dygnet.

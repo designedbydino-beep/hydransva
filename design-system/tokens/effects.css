@@ -1,0 +1,28 @@
+/* ===========================================================================
+   NSVA — Effects: shadows, transitions, z-index
+   Shadows are soft and cool-tinted (navy), never neutral black — keeps the
+   water-utility feel calm and clean. Used sparingly: cards lift gently,
+   borders do most of the separating work.
+   =========================================================================== */
+:root {
+  --shadow-xs:  0 1px 2px rgba(0, 66, 104, 0.06);
+  --shadow-sm:  0 2px 6px rgba(0, 66, 104, 0.08);
+  --shadow-md:  0 6px 18px rgba(0, 66, 104, 0.10);
+  --shadow-lg:  0 16px 40px rgba(0, 66, 104, 0.14);
+  --shadow-focus: var(--focus-ring);
+
+  /* Motion — calm, no bounce. Ease-out for entrances. */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in-out: cubic-bezier(0.45, 0, 0.25, 1); /* @kind other */
+  --dur-fast:    120ms; /* @kind other */
+  --dur-base:    200ms; /* @kind other */
+  --dur-slow:    320ms; /* @kind other */
+  --transition:  var(--dur-base) var(--ease-out); /* @kind other */
+
+  /* Z-index */
+  --z-base:    1; /* @kind other */
+  --z-sticky:  100; /* @kind other */
+  --z-overlay: 1000; /* @kind other */
+  --z-modal:   1100; /* @kind other */
+  --z-toast:   1200; /* @kind other */
+}

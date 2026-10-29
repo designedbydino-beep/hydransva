@@ -1,0 +1,47 @@
+/* ===========================================================================
+   NSVA — Typography tokens  (official: Ubuntu + PT Serif)
+   Per the grafisk guide:
+     Ubuntu   → headings, short texts, captions, UI (rubriker/kort text)
+     PT Serif → running body copy (brödtext)
+   =========================================================================== */
+:root {
+  /* Families */
+  --font-heading: 'Ubuntu', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui:      'Ubuntu', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body:    'PT Serif', Georgia, 'Times New Roman', serif;
+  --font-mono:    'Ubuntu Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Back-compat alias: display === heading */
+  --font-display: var(--font-heading);
+
+  /* Weights — Ubuntu ships 300/400/500/700; PT Serif 400/700 */
+  --fw-light:    300; /* @kind font */
+  --fw-regular:  400; /* @kind font */
+  --fw-medium:   500; /* @kind font */
+  --fw-bold:     700; /* @kind font */
+
+  /* Type scale (tuned for UI; rem on a 16px root) */
+  --text-2xs:  0.75rem;   /* 12px — captions, legal              */
+  --text-xs:   0.8125rem; /* 13px — labels, meta                 */
+  --text-sm:   0.875rem;  /* 14px — secondary body               */
+  --text-base: 1rem;      /* 16px — body                         */
+  --text-md:   1.125rem;  /* 18px — lead body                    */
+  --text-lg:   1.375rem;  /* 22px — small headings               */
+  --text-xl:   1.75rem;   /* 28px — section headings             */
+  --text-2xl:  2.25rem;   /* 36px — page titles                  */
+  --text-3xl:  3rem;      /* 48px — hero                         */
+  --text-4xl:  4rem;      /* 64px — display                      */
+
+  /* Line heights */
+  --leading-tight:   1.12;
+  --leading-snug:    1.25;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* Letter spacing — Ubuntu is friendly; keep display near-neutral */
+  --tracking-tight:  -0.01em;
+  --tracking-snug:   -0.005em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;
+  --tracking-caps:   0.08em;  /* eyebrow / uppercase labels */
+}

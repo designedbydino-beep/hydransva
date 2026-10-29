@@ -1,0 +1,84 @@
+MR. HYDRA – KUNSKAPSBAS: SKYFALL, REGN OCH VA (sammanfattning för agenten)
+Egen sammanfattning skriven för NSVA:s kontrollcenter Hydra. Källor anges i slutet.
+VIKTIGT: NSVA beräknar återkomsttid ENBART med Dahlströms formel (2010). Använd inga andra tabeller.
+
+1. BEGREPP
+- Skyfall: SMHI definierar skyfall som minst 50 mm regn på en timme eller minst 1 mm på en minut.
+  Kraftigt regn som inte når upp till det kallas "skyfallsliknande regn".
+- Återkomsttid: hur ofta en viss regnmängd i genomsnitt inträffar eller överträffas på en plats.
+  Ett 10-årsregn kommer i snitt en gång per tio år. Det betyder inte att det kommer exakt vart tionde år.
+- Återkomsttid gäller UPPSAMLAD mängd under en viss varaktighet (t.ex. 1 h, 3 h, 6 h),
+  inte hur hårt det regnar för stunden. Kort och intensivt eller långt och ihållande kan båda bli ovanligt.
+- Varaktighet: tidsfönstret regnet summeras över.
+- mm/h: regnintensitet. 1 mm regn = 1 liter per kvadratmeter.
+
+2. ÅTERKOMSTTID ENLIGT DAHLSTRÖM (2010)
+- Formeln (Dahlström 2010, SVU-rapport 2010-05; rekommenderas i Svenskt Vatten P104 och P110):
+  i = 190 · ∛Å · ln(T) / T^0,98 + 2
+  i = regnintensitet i l/(s·ha), Å = återkomsttid i månader, T = varaktighet i minuter.
+  Gäller för varaktigheter från 5 minuter till 24 timmar.
+- Omräkning: 1 l/(s·ha) = 0,36 mm/h. Regnmängd i mm = i · 0,006 · T.
+- Kontrollexempel: 20 minuter, 10 år (Å = 120 mån) ger cirka 150 l/(s·ha). 20 år ger cirka 190 l/(s·ha).
+- Baklänges (det Hydra gör med uppmätt och prognostiserat regn):
+  i = mm / (0,006 · T)
+  ∛Å = (i − 2) · T^0,98 / (190 · ln T)
+  Å i månader = (∛Å)³, återkomsttid i år = Å / 12.
+  Exempel: 18 mm på 1 timme ≈ 3,3-årsregn.
+- Hydra testar 1, 3, 6 och 12 timmar och anger den mest extrema återkomsttiden, med en decimal under 10 år
+  (t.ex. "5,4-årsregn"), heltal från 10 år, och ">100 år" över 100 år.
+- Gränser i mm summerat över varaktigheten (används för färgerna och larmnivåerna):
+  1 h:  2 år 15,3 · 10 år 25,7 · 50 år 43,4
+  3 h:  2 år 21,1 · 10 år 34,6 · 50 år 57,6
+  6 h:  2 år 26,1 · 10 år 41,6 · 50 år 68,0
+  12 h: 2 år 33,3 · 10 år 50,8 · 50 år 80,8
+- Ingen klimatfaktor används när dagens regn bedöms. Faktorn 1,25 i P110 gäller dimensionering av nya
+  ledningar för framtida klimat.
+- Kartan: violett = minst 2-årsregn. Ljusviolett 2–10 år, violett 10–50 år, mörkviolett över 50 år.
+- Larm och AI-notiser: 2–10 år ger varning, 10 år och mer ger kritisk nivå.
+- Ledningsnät dimensioneras ofta för regn med några års återkomsttid. Marköversvämning och skador på
+  byggnader ska enligt branschens funktionskrav (Svenskt Vatten P110) undvikas vid betydligt ovanligare regn.
+  Skyfallskarteringar utgår ofta från 100-årsregn.
+
+3. SMHI:S VARNINGAR
+- Tre nivåer: gul (konsekvenser för samhället), orange (allvarliga konsekvenser, fara för allmänheten),
+  röd (mycket allvarliga konsekvenser, stor fara).
+- Varningarna är konsekvensbaserade och regionalt anpassade – samma regnmängd kan ge olika nivå
+  beroende på plats och tid.
+- "Regn" (ihållande, längre tid) varnas bara på gul nivå.
+  "Skyfallsliknande regn" (mycket kraftigt under några timmar) kan varnas på gul och orange nivå.
+- Typiska konsekvenser: översvämmade källare, gator, viadukter och dagvattensystem.
+  Råd till allmänheten: rensa hängrännor och dagvattenbrunnar, skydda källare.
+
+4. SKYFALL OCH VA-SYSTEMET
+- Dagvattensystemet tar hand om vanliga regn. Vid skyfall räcker inte ledningarnas kapacitet
+  och vattnet rinner på ytan till lågpunkter – det är det skyfallskarteringar visar.
+- Kombinerade system (spill + dagvatten i samma ledning) kan brädda vid kraftigt regn.
+- Inläckage och tillskottsvatten ökar flödet till reningsverken vid regn.
+- Högt havsvattenstånd gör att dagvatten och bräddning har svårare att rinna ut i havet.
+  Skyfall samtidigt som högvatten är ett av de värsta lägena för kustkommuner som Helsingborg och Landskrona.
+- MSB och länsstyrelserna rekommenderar att kommuner kartlägger skyfall (lägst 100-årsregn i
+  planering) och tar fram strukturplaner för hur vatten ska ledas och fördröjas.
+
+5. HAVSVATTENSTÅND
+- SMHI mäter vattenstånd vid ett sextiotal platser längs kusten tillsammans med Sjöfartsverket.
+- RH 2000: nivå relativt en fast punkt på land (nationellt höjdsystem).
+- RW: nivå relativt platsens beräknade medelvattenstånd, där medelvatten = 0. Bäst för att
+  jämföra hur högt vattnet står vid stormar. Hydra visar RW.
+- Skillnaden mellan RH 2000 och RW är som mest knappt 20 cm och ändras långsamt över tid.
+- Lufttryck påverkar: högre tryck ger lägre vattenstånd. Vågor filtreras bort i mätningarna.
+- Mätstationer i Hydra: Viken (Helsingborg), Barsebäck och Klagshamn. Värdena är uppmätta timvärden;
+  prognosen framåt beräknas av Hydra.
+
+6. DATAKÄLLOR I HYDRA
+- Regnmätare: SMHI, Försvarsmakten (via SMHI) och DMI. Mest pålitligt på sin plats, men glest.
+- SMHI-prognos: punktprognos per timme över hela kartan. Rättas mot mätarna.
+- Regnradar: visar var skurarna är, även mellan mätarna. Kalibreras mot mätarna.
+- Väderradar: Ängelholm (SMHI) täcker alla åtta NSVA-kommuner inom bästa räckvidden ~120 km.
+  Stevns (DMI) täcker Öresund.
+- Korrektion: faktor = (mätare + 0,3) / (SMHI + 0,3), begränsad till 0,25–4, kräver minst 3 mätare,
+  avtar med tiden framåt.
+
+KÄLLOR
+Dahlström, B. (2010): Regnintensitet – en molnfysikalisk betraktelse, SVU-rapport 2010-05;
+Svenskt Vatten P104, P110 Del 1 (2016) och M148 (2020); SMHI kunskapsbanken om skyfall, varningar och
+vattenstånd; MSB2260 (2023) och MSB1121 (2017); Länsstyrelsernas rekommendationer om skyfall.

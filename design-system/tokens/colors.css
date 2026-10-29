@@ -1,0 +1,102 @@
+/* ===========================================================================
+   NSVA — Colour tokens  (official, per "NSVA grafisk guide 2025-12-09")
+   The palette is SIX families — Blå, Turkos, Grön, Röd, Lila, Grå — each with
+   complementary darker/lighter tones (23 tones total) so matching combinations
+   can be built. Tone scale per family:
+     01  darkest  — TGA* text colour, very high contrast
+     02  mid      — TGA* text colour, meets the 4.5:1 minimum
+     03  bright   — NOT text-safe (~3:1); large text, graphics & fills only
+     04  bakgrund — TGA** tint, a background for text/graphics (≥8.5:1 pairing)
+   Contrast ratios in comments are from the guide (vs white unless noted).
+   =========================================================================== */
+:root {
+  /* --- BLÅ — water, the core identity ------------------------------------- */
+  --blue-01: #004268;   /* TGA* 10.75:1 — logo dark blue, primary anchor      */
+  --blue-02: #006fb9;   /* TGA*  4.53:1 — action / interactive                */
+  --blue-03: #008ed4;   /*       3.60:1 — logo bright blue, highlights/fills  */
+  --blue-04: #bce4fa;   /* TGA** bakgrund — soft water tint                   */
+
+  /* --- TURKOS — avlopp / reningsverk -------------------------------------- */
+  --teal-01: #00545a;   /* TGA*  8.69:1 */
+  --teal-02: #008296;   /* TGA*  4.53:1 */
+  --teal-03: #00a19d;   /*       3.18:1 */
+  --teal-04: #cee7dc;   /* TGA** bakgrund */
+
+  /* --- GRÖN — dagvatten / hållbarhet -------------------------------------- */
+  --green-01: #184428;  /* TGA* 11.08:1 */
+  --green-02: #17873a;  /* TGA*  4.60:1 */
+  --green-03: #4d9e42;  /*       3.34:1 */
+  --green-04: #edf2d0;  /* TGA** bakgrund */
+
+  /* --- RÖD — varning / driftstörning (used sparingly) --------------------- */
+  --red-01: #612018;    /* TGA* 12.22:1 */
+  --red-02: #dc3910;    /* TGA*  4.52:1 */
+  --red-03: #e84d0e;    /*       3.81:1 */
+  --red-04: #fff5e9;    /* TGA** bakgrund */
+
+  /* --- LILA — accent (no bright 03 tone in the guide) --------------------- */
+  --purple-01: #44113c; /* TGA* 15.18:1 */
+  --purple-02: #96368b; /* TGA*  6.83:1 */
+  --purple-04: #f0e1f0; /* TGA** bakgrund */
+
+  /* --- GRÅ — neutrals ----------------------------------------------------- */
+  --grey-01: #474b4c;   /* TGA*  8.95:1 */
+  --grey-02: #72777a;   /* TGA*  4.53:1 */
+  --grey-03: #8a9196;   /*       3.20:1 */
+  --grey-04: #e5e9e6;   /* TGA** bakgrund */
+
+  /* Extra neutrals (system-level, not in the brand sheet) */
+  --ink:     #2b2f30;   /* near-black for long-form body text */
+  --grey-05: #f3f5f4;   /* page tint */
+  --white:   #ffffff;
+
+  /* =========================================================================
+     SEMANTIC ALIASES — reference these in product & component CSS
+     ========================================================================= */
+
+  /* Brand */
+  --color-brand:          var(--blue-01);
+  --color-brand-bright:   var(--blue-03);
+  --color-primary:        var(--blue-02);
+  --color-primary-hover:  #005c99;          /* blue-02 darkened ~8% */
+  --color-primary-active: #004f86;
+  --color-on-primary:     var(--white);
+
+  /* Text */
+  --text-strong:     var(--blue-01);
+  --text-body:       #36393a;
+  --text-muted:      var(--grey-02);
+  --text-on-dark:    var(--white);
+  --text-link:       var(--blue-02);
+  --text-link-hover: var(--blue-01);
+
+  /* Surfaces */
+  --surface-page:       var(--grey-05);
+  --surface-card:       var(--white);
+  --surface-sunken:     #eef1f0;
+  --surface-brand:      var(--blue-01);
+  --surface-tint:       var(--blue-04);
+  --surface-tint-teal:  var(--teal-04);
+  --surface-tint-green: var(--green-04);
+  --surface-tint-red:   var(--red-04);
+  --surface-tint-purple:var(--purple-04);
+
+  /* Borders */
+  --border-subtle:  #dde2e1;
+  --border-default: var(--grey-04);
+  --border-strong:  var(--grey-02);
+  --border-focus:   var(--blue-03);
+
+  /* Status / feedback (uses TGA* text tone on TGA** background) */
+  --status-info:        var(--blue-02);
+  --status-info-bg:     var(--blue-04);
+  --status-success:     var(--green-02);
+  --status-success-bg:  var(--green-04);
+  --status-warning:     var(--red-02);
+  --status-warning-bg:  var(--red-04);
+  --status-danger:      var(--red-02);
+  --status-danger-bg:   var(--red-04);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(0, 142, 212, 0.45);
+}

@@ -1,0 +1,14 @@
+{
+  "name": "hydra-nsva",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HYDRA – NSVA:s kontrollcenter för vatten och avlopp",
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:remote": "wrangler dev --remote",
+    "logs": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "4.150.0"
+  }
+}

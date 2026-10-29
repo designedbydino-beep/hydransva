@@ -1,0 +1,87 @@
+{
+  "v": 1,
+  "mode": "omelette",
+  "root": "project/",
+  "title": "HYDRA - NSVA",
+  "entry": "NSVA Driftövervakning.dc.html",
+  "pages": [
+    {
+      "path": "NSVA Driftövervakning.dc.html",
+      "title": "NSVA Driftövervakning",
+      "kind": "page"
+    },
+    {
+      "path": "index.html",
+      "title": "Bundled Page",
+      "kind": "plain"
+    },
+    {
+      "path": "HYDRA - Integrationsbrief.dc.html",
+      "title": "HYDRA - Integrationsbrief",
+      "kind": "page"
+    },
+    {
+      "path": "deploy/index.html",
+      "title": "Bundled Page",
+      "kind": "plain"
+    }
+  ],
+  "migratorVersion": "artifact-migrator (claude-design-backend d3fe323ed7c4)",
+  "createdAt": "2026-10-29T07:23:58.635Z",
+  "source": {
+    "v": 1,
+    "app": "claude-design",
+    "url": "https://claude.ai/design/p/913a041d-3ed0-4c47-82bc-8197259575cb",
+    "projectId": "913a041d-3ed0-4c47-82bc-8197259575cb",
+    "exportedAt": "2026-10-29T07:23:58.635Z"
+  },
+  "report": {
+    "itemsVersion": 2,
+    "pages": {
+      "total": 4,
+      "ok": 0,
+      "partial": 4,
+      "notMigrated": 0
+    },
+    "items": [
+      {
+        "kind": "external_blocked",
+        "path": "deploy/index.html",
+        "text": "https://api.rainviewer.com/public/weather-maps.json"
+      },
+      {
+        "kind": "needs_capability",
+        "path": "HYDRA - Integrationsbrief.dc.html",
+        "text": "has speaker notes (9 slides): kept, but not shown while presenting in Claude",
+        "capability": "presenter_view"
+      },
+      {
+        "kind": "external_blocked",
+        "path": "index.html",
+        "text": "https://api.rainviewer.com/public/weather-maps.json"
+      },
+      {
+        "kind": "needs_capability",
+        "path": "NSVA Driftövervakning.dc.html",
+        "text": "its calls to Claude (window.claude.complete) may not work after the move, or may ask viewers for permission first",
+        "capability": "claude_calls"
+      },
+      {
+        "kind": "external_blocked",
+        "path": "NSVA Driftövervakning.dc.html",
+        "text": "https://api.rainviewer.com/public/weather-maps.json"
+      },
+      {
+        "kind": "external_blocked",
+        "path": "deploy/worker.js",
+        "text": "https://api.rainviewer.com/public/weather-maps.json"
+      },
+      {
+        "kind": "external_blocked",
+        "path": "worker.js",
+        "text": "https://api.rainviewer.com/public/weather-maps.json"
+      }
+    ],
+    "truncated": 0
+  }
+}

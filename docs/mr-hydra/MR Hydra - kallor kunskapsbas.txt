@@ -1,0 +1,76 @@
+MR. HYDRA – KÄLLOR FÖR KUNSKAPSBASEN (SKYFALL, REGN, VA)
+
+I ElevenLabs: Agent → Knowledge base → Add document.
+Välj "URL" och klistra in länkarna nedan, en i taget. ElevenLabs hämtar själv innehållet.
+Fungerar inte en PDF-länk: öppna den i webbläsaren, spara filen och välj "File" i stället.
+Ladda också upp filen "MR Hydra - kunskapsbas skyfall.txt" (sammanfattningen) som "File".
+
+==================================================
+ÅTERKOMSTTID – DAHLSTRÖM 2010 (viktigast)
+==================================================
+NSVA beräknar återkomsttid enbart med Dahlströms formel. Lägg INTE in SMHI:s
+återkomsttidstabeller (Klimatologi 47 / skyfallsstatistik) – de ger andra värden.
+
+1. Dahlström (2010): Regnintensitet – en molnfysikalisk betraktelse, SVU-rapport 2010-05
+   Formeln Hydra använder.
+   http://vav.griffel.net/filer/Rapport_2010-05.pdf
+
+==================================================
+SMHI – SKYFALL OCH VARNINGAR
+==================================================
+
+4. Varning för regn och skyfallsliknande regn (SMHI:s varningssystem)
+   https://www.smhi.se/kunskapsbanken/meteorologi/varningar-och-meddelanden/varning-for-regn
+
+==================================================
+SMHI – HAVSVATTENSTÅND
+==================================================
+
+5. Havsvattenstånd (öppna data, mätstationer)
+   https://www.smhi.se/data/hav-och-havsmiljo/havsvattenstand
+
+6. Höjdsystem och vattenstånd (RH 2000 och RW förklarat)
+   https://www.smhi.se/kunskapsbanken/oceanografi/vattenstand-i-havet/hojdsystem-och-vattenstand
+
+7. Årets medelvattenstånd
+   https://www.smhi.se/kunskapsbanken/oceanografi/vattenstand-i-havet/arets-medelvattenstand
+
+==================================================
+SVENSKT VATTEN (VA-branschen)
+==================================================
+
+8. P110 Del 1 – Avledning av dag-, drän- och spillvatten (fri PDF, policy och funktionskrav)
+   https://vattenbokhandeln.svensktvatten.se/wp-content/uploads/2025/08/P110_del1_web_low_0220.pdf
+
+9. M148 – Nederbördsstatistik (2020, fri PDF)
+   https://vattenbokhandeln.svensktvatten.se/wp-content/uploads/2020/05/Svenskt_Vatten_M148.pdf
+
+   OBS: P110 Del 2, P104 (nederbördsdata) och P105 (hållbar dagvattenhantering) säljs av
+   Svenskt Vatten. Har NSVA köpt dem kan ni ladda upp era egna exemplar som filer.
+
+==================================================
+MSB / LÄNSSTYRELSEN – SKYFALLSKARTERING
+==================================================
+
+10. MSB: Metod för skyfallskartering av tätorter (MSB2260, 2023)
+    https://rib.msb.se/filer/pdf/30510.pdf
+
+11. MSB: Händelsescenario skyfall
+    https://rib.msb.se/filer/pdf/29399.pdf
+
+12. Länsstyrelsen: Rekommendationer för hantering av översvämning till följd av skyfall
+    https://www.lansstyrelsen.se/download/18.2ace232419540c6a2c72d33c/1741178279146/Rekommendationer%20f%C3%B6r%20hantering%20av%20%C3%B6versv%C3%A4mning%20till%20f%C3%B6ljd%20av%20skyfall.pdf
+
+13. Länsstyrelsen: Strukturplan för hantering av skyfallsrisker – kunskapsstöd (2025)
+    https://www.lansstyrelsen.se/download/18.4c443e4619540d2095a1fc77/1741007331827/R2025-08-Strukturplan%20f%C3%B6r%20skyfall%20-%20Kunskapsst%C3%B6d.pdf
+
+==================================================
+NSVA:S EGNA (lägg till själva – viktigast för lokala svar)
+==================================================
+- Skyfallskarteringar och skyfallsplaner för de åtta kommunerna
+  (sök även i MSB:s översvämningsportal och hos Länsstyrelsen Skåne)
+- Larmgränser, eskalerings- och beredskapsrutiner
+- Anläggningslista per kommun med kapacitet
+- Kända översvämningsområden och historiska händelser
+- VA-plan, dagvattenpolicy och ordlista
+Inga personuppgifter – agenten är publik.

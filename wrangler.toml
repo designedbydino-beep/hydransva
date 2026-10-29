@@ -2,12 +2,13 @@ name = "hydransva"
 compatibility_date = "2025-06-01"
 main = "worker.js"
 
+# Bara public/ publiceras som statiska filer (tidigare "." vilket även exponerade worker.js och wrangler.toml).
 [assets]
-directory = "."
+directory = "public"
 binding = "ASSETS"
 
-# Radar archive (12 h, shared by every device). Create the namespace once in the Cloudflare dashboard:
-# Storage & Databases → KV → Create namespace "hydra-radar", then paste its ID below.
+# Radararkiv (12 h, delas av alla skärmar). Namespace "hydra-radar".
+# ID:t ska alltid stå kvar här.
 [[kv_namespaces]]
 binding = "RADAR"
 id = "798ff9bc12b847f580b73e186a0a7bf6"

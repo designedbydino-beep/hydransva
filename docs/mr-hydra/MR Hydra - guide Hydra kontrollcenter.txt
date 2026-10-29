@@ -1,0 +1,190 @@
+HYDRA KONTROLLCENTER – GUIDE FÖR MR. HYDRA
+Beskriver allt som finns i Hydra, så att agenten kan förklara verktyget och hjälpa användaren att hitta rätt.
+
+==================================================
+1. VAD HYDRA ÄR
+==================================================
+Hydra är NSVA:s kontrollcenter för vatten och avlopp i nordvästra Skåne. Det visar läget live för
+NSVA:s åtta kommuner: Helsingborg, Landskrona, Båstad, Bjuv, Åstorp, Svalöv, Örkelljunga och Perstorp.
+Hydra körs i webbläsaren och visas bland annat på en stor pekskärm i kontoret. Allt uppdateras
+automatiskt – ingen behöver ladda om sidan.
+
+==================================================
+2. VYER
+==================================================
+Startmenyn: här väljer man vy. Tre kort:
+- Kontrollcenter (Hydra-vyn): hela verksamheten – dricksvatten, spillvatten, dagvatten, larm m.m.
+- Skyfall (Visky): allt som rör nederbörd, skyfall och havsvattenstånd. Steg 1 i utvecklingen.
+- Produktion: flödesmätare i ledningsnät och pumpstationer. Under utveckling.
+
+Man kan alltid gå tillbaka till startmenyn via menyknappen uppe till vänster.
+
+==================================================
+3. SKÄRMENS DELAR
+==================================================
+- Rubrik högst upp: vyns namn och underrubrik.
+- Live-raden under rubriken: visar att datan är live och hur gammal varje källa är
+  (Radar, SMHI, Regnmätare, Hav). Pulserar när ny data kommer in.
+- Väder och klocka uppe till höger.
+- Kartan i mitten: nordvästra Skåne och Danmark. Går att zooma (+/−, scrollhjul, två fingrar)
+  och dra. Knappen ⌂ visar hela området igen.
+- Widgets i vänster och höger kolumn.
+- Kartlager nere till vänster på kartan.
+- Tidsreglaget längst ner på kartan (Skyfallsvyn).
+- Textfältet och mikrofonen längst ner: här pratar man med MR. Hydra.
+- Kugghjulet uppe till höger: inställningar.
+
+==================================================
+4. KARTAN
+==================================================
+- De åtta NSVA-kommunerna har ljusare yta och kommungränser. Kommunnamn syns när man håller
+  över eller trycker på en kommun.
+- Trycker man på en kommun zoomar kartan in och visar kommunens anläggningar: vattenverk,
+  reningsverk, pumpstationer och reservoarer.
+- Trycker man på en anläggning öppnas stationsdata: produktion, flöden, nivåer, drifttid och larm.
+- Havsvattenståndsmätaren för Öresund sitter på kartans vänsterkant. Strecket i mitten är
+  medelvattenståndet (0 cm). Skalan går från −100 till +100 cm.
+- Regnet på kartan är ett sammanhängande fält som färgas efter intensitet.
+
+==================================================
+5. KARTLAGER
+==================================================
+Slås på och av i rutan Kartlager:
+- Skyfall: regnfältet och tidsreglaget. På som standard i Skyfallsvyn.
+- V2: kartversion 2 (SMHI:s intensitetsfärger, standard). Av = version 1 (turkosa nyanser).
+- Vind: rörliga pilar i vindens riktning.
+- Regnmätare: alla regnmätare som romber. Tryck på en för all data.
+- Radartäckning: en ring på 100 km runt varje väderradar – där mäter radarn regnmängden tillförlitligt (SMHI: längre bort går strålen över molnen). Max räckvidd är 240 km.
+  Radarn når längre, men där blir värdena för osäkra för att använda. Tryck på en radar för detaljer.
+- Anmälningar: anmälningar från allmänheten om översvämning, som svarta punkter.
+- Larm: pulserande ringar där det finns aktiva larm (Kontrollcenter).
+
+==================================================
+6. FÄRGSKALAN OCH ÅTERKOMSTTID
+==================================================
+Version 2 (standard), mm per timme:
+- Blå/turkos: ringa till lätt regn (under 0,5 mm/h)
+- Grön: måttligt (0,5–1)
+- Gul: 1–2
+- Orange: 2–4
+- Ljusröd: kraftigt (4–10)
+- Röd: mycket kraftigt (10–50)
+- Mörkröd: skyfall (över 50)
+Violett = återkomstregn: den uppsamlade regnmängden har nått minst ett 2-årsregn.
+Mörkare violett = 10-års- och 50-årsregn. Gränserna beräknas med Dahlströms formel (2010),
+i = 190 · ∛Å · ln(T) / T^0,98 + 2 (Svenskt Vatten P104). 2-årsregn på 1 timme = 15,3 mm.
+Hydra anger också den exakta återkomsttiden, t.ex. "5,4-årsregn (18 mm / 1 h)", i varningar, larm,
+AI-notiser och tidsreglaget.
+Informationsknappen (?) vid färgskalan förklarar hur det räknas.
+
+==================================================
+7. TIDSREGLAGET
+==================================================
+- Går från −12 timmar till +12 timmar. Mitten = Nu.
+- Vänster halva: uppmätt regn (regnmätare och sparad radarhistorik).
+- Höger halva: prognos (SMHI, rättad mot mätarna).
+- Radarhistorik sparas centralt i 12 timmar, så alla skärmar ser samma historik.
+
+==================================================
+8. VARNINGAR HÖGST UPP PÅ KARTAN
+==================================================
+Två separata rutor som blinkar:
+- Just nu (heldragen kant): "Varning för skyfall" (rött eller violett, minst 10 mm/h eller
+  återkomstregn) eller "Kraftigt regn just nu" (orange, minst 2 mm/h).
+- Framåt (streckad kant, klocka och "OM X H"): "Kraftigt regn om 4 h" eller
+  "Skyfall väntas om 6 h", med kommun, klockslag och mängd.
+Båda visas bara när det som kommer är värre än det som pågår. Trycker man på rutan visas
+regnet på kartan för den timmen.
+
+==================================================
+9. WIDGETS
+==================================================
+Trycker man på en widget öppnas en detaljvy med historik och fler siffror. I många detaljvyer
+kan man trycka på en kommun för ännu mer detaljer.
+
+Skyfallsvyn (standard):
+- Väderradar & vind: liten live-radar med svep, vindriktning och nederbörd. Grön rad
+  "Nederbörd övervakas · Läget stabilt" när inget händer, röd vid skyfallsvarning.
+- Prognoser: regnet 12 timmar bakåt och 12 timmar framåt i ett diagram.
+- Havsvattenstånd: nivån vid Viken, Barsebäck och Klagshamn i cm relativt medelvattenstånd.
+  Detaljvyn: uppmätta timvärden senaste dygnet, max/min 24 h, ändring 3 h, RH 2000,
+  vattentemperatur, beräknad 24 h prognos.
+- AI-notiser: prediktiva varningar, t.ex. risk för översvämning när kraftigt regn är på väg.
+- Anmälningar · översvämning: anmälningar från allmänheten med adress och status.
+
+Kontrollcentret (kan även läggas till i Skyfallsvyn via inställningarna):
+- Dricksvatten: produktion, tryck och kvalitet per kommun.
+- Spillvatten: inflöde till reningsverk, pumpnivåer och risk för bräddning.
+- Dagvatten: flöden och fyllnadsgrad i magasin.
+- Aktiva alarm: larm från driften, sorterade efter allvar.
+- Flödesmätare: volym per timme i ledningsnät och pumpstationer.
+Värden för dricksvatten, spillvatten, dagvatten, larm och flödesmätare är än så länge
+simulerade – kopplingen till SCADA kommer senare.
+
+==================================================
+10. REGNMÄTARE OCH RADAR – DETALJVYER
+==================================================
+Regnmätare (tryck på en romb i kartlagret Regnmätare):
+- Regn senaste timmen, summor 3/6/12/24 h, blötaste timmen, timdiagram för senaste dygnet,
+  hur många timmar mätaren rapporterade.
+- För SMHI- och Försvarsmaktens stationer även temperatur, vind, byvind, luftfuktighet,
+  regn per kvart och dygnsnederbörd senaste månaden.
+
+Väderradar (tryck på en radar i kartlagret Radartäckning):
+- Ägare (SMHI eller DMI), position, flödesstatus.
+- Vad den ser nu inom 100 km: mest regn, yta med regn, snitt.
+- Vilka NSVA-kommuner som täcks (Ängelholm täcker alla åtta).
+- Utveckling senaste timmarna.
+- Radar jämfört med regnmätare inom 100 km: mätarens värde, radarns råa och kalibrerade värde
+  och skillnaden (grön < 0,5 mm, gul < 2 mm, röd större).
+
+==================================================
+11. DATAKÄLLOR
+==================================================
+- Regnmätare: SMHI, Försvarsmakten (publiceras via SMHI) och DMI.
+- Prognos: SMHI:s punktprognos per timme över hela kartan.
+- Radar: sammanslagen nordisk radarbild (SMHI + DMI). Radarer: Ängelholm, Karlskrona, Vara
+  (SMHI), Stevns, Bornholm, Virring (DMI).
+- Havsvattenstånd: SMHI:s mätstationer, timvärden.
+Märken på widgets: LIVE = riktig data som svarat nyss, EST = beräknat från live-data,
+SIM = simulerat (källan nås inte eller är inte inkopplad än).
+
+==================================================
+12. HUR KÄLLORNA RÄTTAR VARANDRA
+==================================================
+- Bakåt i tiden (−12 till −1 h): uppmätt. Viktat snitt av mätare inom 35 km, sparad radar.
+- Nu: nära en mätare väger mätaren tyngst, längre bort tar radar och korrigerad prognos över.
+- Framåt (+1 till +12 h): SMHI-prognos gånger en korrektionsfaktor.
+- Korrektionsfaktor = (mätare + 0,3) ÷ (SMHI + 0,3) för senaste hela timmen, begränsad till
+  ×0,25–×4, kräver minst 3 mätare. Effekten halveras ungefär varannan timme framåt.
+- Radarn kalibreras på samma sätt mot mätarna.
+- Kvalitetskontroll: saknade timmar räknas inte som 0, orimliga värden över 150 mm/h sorteras bort.
+
+==================================================
+13. INSTÄLLNINGAR (kugghjulet)
+==================================================
+- Widgets: välj vilka widgets som ska synas och i vilken kolumn, även widgets från andra vyer.
+  "Återställ standardläge" återställer.
+- Datakällor & metod: förklaringar om översikt, regnmätare, prognos, radar, korrektion,
+  återkomsttid, havsvattenstånd och live-status.
+- Utseende: Design 1 eller Design 2 (NSVA:s grafiska profil).
+- Helskärm: tar bort webbläsarens adressfält.
+
+==================================================
+14. MR. HYDRA (agenten)
+==================================================
+- Nås via textfältet och mikrofonen längst ner. Mikrofonen startar och stänger röstsamtalet.
+- Chattrutan kan minimeras med "–" och visas då som en smal list i nedre högra hörnet.
+- Kan svara på frågor om läget och styra Hydra: öppna widgets, flytta tidsreglaget, byta vy,
+  zooma in på kommuner, visa förklaringar och ge en guidad genomgång.
+- Genomgången börjar i den vy användaren står i och går igenom vyns delar och widgets.
+
+==================================================
+15. VANLIGA FRÅGOR
+==================================================
+- "Varför står det SIM?" – Källan nås inte just nu eller är inte inkopplad än.
+- "Är prognosen för havsvattenstånd uppmätt?" – Nej, den beräknas av Hydra. SMHI publicerar
+  ingen öppen vattenståndsprognos. Nuvärdet och historiken är uppmätta.
+- "Varför visas inget regn bakåt?" – Radarhistoriken byggs upp efter hand; efter 12 timmar
+  finns hela perioden.
+- "Behöver man ladda om sidan?" – Nej, allt uppdateras automatiskt.
