@@ -13,6 +13,8 @@ class Component extends DCLogic {
     focused: null,
     openWidget: null,
     openWidgetMuni: null,
+    wdetFrom: null, // where the detail view grows from (the clicked card), see zoomFrom()
+    leaving: {}, // overlays playing their exit animation, see leave()
     dragId: null,
     dragActive: false,
     dragStartX: 0,
@@ -653,7 +655,7 @@ class Component extends DCLogic {
       daily: daily.map(v => ({ h: v.v == null ? 0 : Math.max(3, v.v / dtop * 100), color: (v.v || 0) >= 10 ? '#ffb547' : (v.v || 0) >= 1 ? '#35d6f2' : 'rgba(127,168,181,.4)', tip: new Date(v.t).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) + ' · ' + f1(v.v) + ' mm' })), hasDaily: daily.length > 0,
       dailySum: f1(dsum), dailyDays: daily.length,
       noExtraTxt: g.src === 'DMI' ? 'DMI publicerar timvärden för nederbörd. Fler parametrar hämtas inte för danska stationer ännu.' : g.src === 'SIM' ? 'Simulerad mätare – ingen riktig data.' : '',
-      close: () => this.setState({ gauge: null, gHist: null }),
+      close: () => this.leave('gd', () => this.setState({ gauge: null, gHist: null })),
       hist: this.gaugeHistView(g),
     };
   }
@@ -895,7 +897,7 @@ class Component extends DCLogic {
       rows, hasRows: rows.length > 0, noRows: rows.length === 0, noRowsTxt: gs.length ? 'Inga mätare inom 100 km har värde för senaste hela timmen.' : 'Inga regnmätare inom 100 km.',
       cmpGauge: n ? f1(sg / n) : '–', cmpRadar: n ? f1(sr / n) : '–', cmpMae: n ? f1(sabs / n) : '–', cmpN: n + '',
       calTxt: ci.n ? ('×' + f1(ci.factor) + ' från ' + ci.n + ' mätare') : 'Ingen kalibrering (färre än 3 mätare med värde)',
-      close: () => this.setState({ radarSel: null }),
+      close: () => this.leave('rd', () => this.setState({ radarSel: null })),
     };
   }
   // ---- Radar history: the open feed only keeps ~2 h, so every completed clock hour is saved locally
@@ -2624,7 +2626,25 @@ class Component extends DCLogic {
     };
   }
   widgetLabel(id) { return ({ matare: 'Regnmätare', flode: 'Flödesmätare', dricks: 'Dricksvatten', spill: 'Spillvatten', dag: 'Dagvatten', hav: 'Havsvattenstånd', radar: 'Väderradar & vind', prognos: 'Prognoser', ai: 'AI-notiser', alarm: 'Aktiva alarm', anmal: 'Anmälningar · översvämning' })[id] || id; }
-  openWidgetDetail(id) { this.setState({ openWidget: id, openWidgetMuni: null }); }
+  openWidgetDetail(id, from) { this.setState({ openWidget: id, openWidgetMuni: null, wdetFrom: from || null }); }
+  // Clicked card's centre relative to the stage centre (stage px) and its width relative to the detail view,
+  // so the detail view can grow out of the card (css/motion.css .mo-zoom).
+  zoomFrom(e) {
+    const el = e && e.currentTarget, sc = this.state.scale || 1;
+    if (!el || !el.getBoundingClientRect) return null;
+    const r = el.getBoundingClientRect();
+    return { x: Math.round((r.left + r.width / 2 - innerWidth / 2) / sc), y: Math.round((r.top + r.height / 2 - innerHeight / 2) / sc), s: Math.min(0.9, Math.max(0.2, r.width / sc / 1180)).toFixed(2) };
+  }
+  // Lets an overlay play its exit animation (class mo-out, css/motion.css) before done() unmounts it.
+  leave(key, done) {
+    if (this.state.leaving[key]) return;
+    this.setState({ leaving: Object.assign({}, this.state.leaving, { [key]: true }) });
+    setTimeout(() => {
+      done();
+      const l = Object.assign({}, this.state.leaving); delete l[key];
+      this.setState({ leaving: l });
+    }, 200);
+  }
   closeWidgetDetail() { this.setState({ openWidget: null, openWidgetMuni: null }); }
   // ---------- live data snapshot for the JARVIS text agent (Copilot) ----------
   resolveWidget(name) {
@@ -2823,7 +2843,9 @@ class Component extends DCLogic {
     const byId = {}; baseM.forEach(m => { byId[m.id] = m; });
     const sys = this.systems(null);
     const ac = this.acHex();
-    const out = { open: true, wid: id, title: this.widgetLabel(id), close: () => this.closeWidgetDetail(),
+    const f = this.state.wdetFrom;
+    const out = { open: true, wid: id, title: this.widgetLabel(id), close: () => this.leave('wdet', () => this.closeWidgetDetail()),
+      zoomVars: f ? '--fx:' + f.x + 'px;--fy:' + f.y + 'px;--fs:' + f.s : '',
       isDricks: id === 'dricks', isSpill: id === 'spill', isDag: id === 'dag', isHav: id === 'hav', isRadar: id === 'radar', isPrognos: id === 'prognos', isAi: id === 'ai', isAlarm: id === 'alarm', isAnmal: id === 'anmal',
       rows: [], hist: [], hist2: [], kpis: [], notices: [], alarms: [], legend: '',
       muniOpen: false, muniClosed: true, muni: { kpis: [], hist: [], hist2: [], levels: [], hist2length: false, levelslength: false, histLong: false } };
@@ -3214,7 +3236,7 @@ class Component extends DCLogic {
       dim: this.state.dragId && this.state.dragId !== id && this.state.dragActive ? '0.62' : '1',
       onDown: (e) => this.startDrag(id, e),
       onClick: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
-      open: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; } this.openWidgetDetail(id); },
+      open: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; } this.openWidgetDetail(id, this.zoomFrom(e)); },
       hide: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (e && e.preventDefault) e.preventDefault(); if (this.viewCol(id)) this.toggleWidget(id); },
       hideDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
     };
@@ -3892,7 +3914,7 @@ class Component extends DCLogic {
       biasTxt: b.n ? ('SMHI-prognosen rättas ×' + f1(b.factor) + ' (mätare ' + f1(b.gaugeMean) + ' mm mot SMHI ' + f1(b.modelMean) + ' mm senaste timmen, ' + b.n + ' mätare)') : 'Ingen rättning av prognosen (färre än 3 mätare med värde).',
       radarTxt: this.radarCalInfo && this.radarCalInfo.n ? ('Radarn kalibreras ×' + f1(this.radarCalInfo.factor) + ' mot ' + this.radarCalInfo.n + ' mätare') : 'Radarn används okalibrerad (för få mätare).',
       sw, swList: sw.list, swHas: sw.list.length > 0,
-      close: () => this.setState({ evidence: null }),
+      close: () => this.leave('evd', () => this.setState({ evidence: null })),
     };
   }
   openEvidence(which) {
@@ -4243,6 +4265,7 @@ class Component extends DCLogic {
   renderVals() {
     const acMap = { Cyan: ['#35d6f2', '53,214,242'], Teal: ['#2dd4bf', '45,212,191'], 'Blå': ['#4aa8ff', '74,168,255'] };
     const d2 = this.state.design === 2;
+    const L = this.state.leaving;
     // Design 2: accent = NSVA Blå 03 (logo bright blue)
     const [ac, acglow] = d2 ? ['#008ed4', '0,142,212'] : (acMap[this.props.accent] || acMap.Cyan);
     const setDesign = n => { try { localStorage.setItem('nsva_design', String(n)); } catch (e) {} this.setState({ design: n }); };
@@ -4443,11 +4466,13 @@ class Component extends DCLogic {
       viewSub: this.viewDefs()[this.state.view || 'hydra'].sub,
       goMenu: () => this.setState({ view: null, settingsOpen: false, openWidget: null }),
       rainBgRef: this._rainBgRefFn || (this._rainBgRefFn = (el) => { this._rainBgEl = el; }),
-      openHydra: () => this.setView('hydra'),
-      openVisky: () => this.setView('visky'),
-      openProd: () => this.setView('prod'),
+      openHydra: () => this.leave('menu', () => this.setView('hydra')),
+      openVisky: () => this.leave('menu', () => this.setView('visky')),
+      openProd: () => this.leave('menu', () => this.setView('prod')),
+      // 'mo-out' while an overlay plays its exit animation
+      mo: { wdet: L.wdet ? 'mo-out' : '', gd: L.gd ? 'mo-out' : '', rd: L.rd ? 'mo-out' : '', evd: L.evd ? 'mo-out' : '', settings: L.settings ? 'mo-out' : '', menu: L.menu ? 'mo-out' : '' },
       widgetMenu: this.widgetMenu(),
-      toggleSettings: () => this.setState(s => ({ settingsOpen: !s.settingsOpen })),
+      toggleSettings: () => this.state.settingsOpen ? this.leave('settings', () => this.setState({ settingsOpen: false })) : this.setState({ settingsOpen: true }),
       designClass: d2 ? 'nsva-d2' : '',
       isD1: !d2, isD2: d2,
       setDesign1: () => setDesign(1),
@@ -4476,7 +4501,7 @@ class Component extends DCLogic {
       infoTopics: this.infoTopics(),
       it: this.infoTopicFlags(),
       infoLive: this.infoLive(),
-      closeSettings: () => this.setState({ settingsOpen: false }),
+      closeSettings: () => this.leave('settings', () => this.setState({ settingsOpen: false })),
       resetLayout: () => this.resetLayout(),
       filters: this.state.filters,
       skyfallScanning: this.state.skyfallScan,

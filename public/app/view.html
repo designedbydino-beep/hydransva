@@ -73,17 +73,17 @@
 
     <!-- ---------- HYDRA START MENU ---------- -->
     <sc-if value="{{ onMenu }}" hint-placeholder-val="{{ true }}">
-      <div style="position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;background:radial-gradient(110% 90% at 50% 0%, #0b2330 0%, #061722 45%, #030c12 78%, #020709 100%)">
+      <div class="mo-menu {{ mo.menu }}" style="position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;background:radial-gradient(110% 90% at 50% 0%, #0b2330 0%, #061722 45%, #030c12 78%, #020709 100%)">
         <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(74,196,224,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(74,196,224,.04) 1px, transparent 1px);background-size:48px 48px;pointer-events:none"></div>
 
-        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:18px">
+        <div class="mo-stagger" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:18px">
           <sc-if value="{{ isD1 }}" hint-placeholder-val="{{ true }}"><img src="img/nsva-logo.png" alt="NSVA" style="height:54px;width:auto;display:block;margin-bottom:22px;filter:drop-shadow(0 1px 14px rgba(0,0,0,.6))"></sc-if><sc-if value="{{ isD2 }}" hint-placeholder-val="{{ false }}"><img src="img/nsva-logo.png" alt="NSVA" style="height:54px;width:auto;display:block;margin-bottom:22px;filter:drop-shadow(0 1px 14px rgba(0,0,0,.6))"></sc-if>
           <div style="font-size:64px;font-weight:700;letter-spacing:.42em;color:#eaf7fb;line-height:1;margin-right:-.42em">HYDRA</div>
           <div style="height:2px;width:340px;background:linear-gradient(90deg, transparent, var(--ac,#35d6f2), transparent)"></div>
           <div style="font-size:15px;letter-spacing:.3em;color:#7fa8b5;text-transform:uppercase">Kontrollcenter för NSVA · välj vy</div>
         </div>
 
-        <div style="position:relative;display:grid;grid-template-columns:repeat(3, 400px);gap:28px">
+        <div class="mo-stagger mo-stagger-lg" style="position:relative;display:grid;grid-template-columns:repeat(3, 400px);gap:28px">
           <!-- VISKY (steg 1) -->
           <div sc-camel-on-click="{{ openVisky }}" style="cursor:pointer;display:flex;flex-direction:column;gap:18px;padding:30px 30px 26px;border-radius:20px;background:linear-gradient(160deg, rgba(20,52,68,.62), rgba(7,18,26,.5));border:1px solid rgba(var(--acg,53,214,242),.5);box-shadow:0 0 0 1px rgba(var(--acg,53,214,242),.15), 0 18px 50px rgba(0,0,0,.5);transition:transform .18s, box-shadow .18s" style-hover="transform:translateY(-4px);box-shadow:0 0 0 1px var(--ac,#35d6f2), 0 0 40px rgba(var(--acg,53,214,242),.3), 0 24px 60px rgba(0,0,0,.55)">
             <div style="display:flex;align-items:center;justify-content:space-between">
@@ -148,8 +148,8 @@
 
     <!-- ---------- SETTINGS PANEL ---------- -->
     <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
-      <div sc-camel-on-click="{{ closeSettings }}" style="position:absolute;inset:0;z-index:40;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
-      <div style="position:absolute;top:84px;right:28px;z-index:41;width:{{settingsWidth}};max-height:calc(100% - 110px);display:flex;flex-direction:column;border-radius:16px;padding:18px 18px 16px;background:linear-gradient(160deg, rgba(14,34,44,.97), rgba(6,16,23,.96));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 24px 70px rgba(0,0,0,.6);backdrop-filter:blur(20px)">
+      <div sc-camel-on-click="{{ closeSettings }}" class="mo-backdrop {{ mo.settings }}" style="position:absolute;inset:0;z-index:40;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
+      <div class="mo-drop {{ mo.settings }}" style="position:absolute;top:84px;right:28px;z-index:41;width:{{settingsWidth}};max-height:calc(100% - 110px);display:flex;flex-direction:column;border-radius:16px;padding:18px 18px 16px;background:linear-gradient(160deg, rgba(14,34,44,.97), rgba(6,16,23,.96));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 24px 70px rgba(0,0,0,.6);backdrop-filter:blur(20px)">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;flex:0 0 auto">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--ac,#35d6f2);box-shadow:0 0 10px var(--ac,#35d6f2)"></span>
           <span style="font-size:12px;letter-spacing:.2em;color:#8fcfe0;text-transform:uppercase;font-weight:600">Inställningar</span>
@@ -443,7 +443,7 @@
 
         <!-- WIDGET: Flödesmätare (ledningsnät + pumpstationer) -->
         <sc-if value="{{ W.flode.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="flode" sc-camel-on-mouse-down="{{ W.flode.onDown }}" sc-camel-on-click="{{ W.flode.open }}" style="order:{{ W.flode.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.flode.glow }};opacity:{{ W.flode.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="flode" sc-camel-on-mouse-down="{{ W.flode.onDown }}" sc-camel-on-click="{{ W.flode.open }}" style="order:{{ W.flode.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.flode.glow }};opacity:{{ W.flode.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.flode.hideDown }}" sc-camel-on-click="{{ W.flode.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.flode.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -482,7 +482,7 @@
 
         <!-- WIDGET: Dricksvatten -->
         <sc-if value="{{ W.dricks.inLeft }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="dricks" sc-camel-on-mouse-down="{{ W.dricks.onDown }}" sc-camel-on-click="{{ W.dricks.open }}" style="order:{{ W.dricks.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dricks.glow }};opacity:{{ W.dricks.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="dricks" sc-camel-on-mouse-down="{{ W.dricks.onDown }}" sc-camel-on-click="{{ W.dricks.open }}" style="order:{{ W.dricks.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dricks.glow }};opacity:{{ W.dricks.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.dricks.hideDown }}" sc-camel-on-click="{{ W.dricks.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.dricks.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -530,7 +530,7 @@
 
         <!-- WIDGET: Spillvatten -->
         <sc-if value="{{ W.spill.inLeft }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="spill" sc-camel-on-mouse-down="{{ W.spill.onDown }}" sc-camel-on-click="{{ W.spill.open }}" style="order:{{ W.spill.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.spill.glow }};opacity:{{ W.spill.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="spill" sc-camel-on-mouse-down="{{ W.spill.onDown }}" sc-camel-on-click="{{ W.spill.open }}" style="order:{{ W.spill.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.spill.glow }};opacity:{{ W.spill.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.spill.hideDown }}" sc-camel-on-click="{{ W.spill.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.spill.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -561,7 +561,7 @@
 
         <!-- WIDGET: Dagvatten -->
         <sc-if value="{{ W.dag.inLeft }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="dag" sc-camel-on-mouse-down="{{ W.dag.onDown }}" sc-camel-on-click="{{ W.dag.open }}" style="order:{{ W.dag.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dag.glow }};opacity:{{ W.dag.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="dag" sc-camel-on-mouse-down="{{ W.dag.onDown }}" sc-camel-on-click="{{ W.dag.open }}" style="order:{{ W.dag.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dag.glow }};opacity:{{ W.dag.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.dag.hideDown }}" sc-camel-on-click="{{ W.dag.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.dag.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -596,7 +596,7 @@
 
         <!-- WIDGET: Havsvattenstånd -->
         <sc-if value="{{ W.hav.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="hav" sc-camel-on-mouse-down="{{ W.hav.onDown }}" sc-camel-on-click="{{ W.hav.open }}" style="order:{{ W.hav.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.hav.glow }};opacity:{{ W.hav.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="hav" sc-camel-on-mouse-down="{{ W.hav.onDown }}" sc-camel-on-click="{{ W.hav.open }}" style="order:{{ W.hav.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.hav.glow }};opacity:{{ W.hav.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42);overflow:hidden">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.hav.hideDown }}" sc-camel-on-click="{{ W.hav.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.hav.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -631,7 +631,7 @@
 
         <!-- WIDGET: Väderradar + vind -->
         <sc-if value="{{ W.radar.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="radar" sc-camel-on-mouse-down="{{ W.radar.onDown }}" sc-camel-on-click="{{ W.radar.open }}" style="order:{{ W.radar.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.radar.glow }};opacity:{{ W.radar.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="radar" sc-camel-on-mouse-down="{{ W.radar.onDown }}" sc-camel-on-click="{{ W.radar.open }}" style="order:{{ W.radar.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.radar.glow }};opacity:{{ W.radar.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
             <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
                 <span sc-camel-on-mouse-down="{{ W.radar.hideDown }}" sc-camel-on-click="{{ W.radar.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.radar.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -709,7 +709,7 @@
 
         <!-- WIDGET: Prognoser -->
         <sc-if value="{{ W.prognos.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="prognos" sc-camel-on-mouse-down="{{ W.prognos.onDown }}" sc-camel-on-click="{{ W.prognos.open }}" style="order:{{ W.prognos.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.prognos.glow }};opacity:{{ W.prognos.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="prognos" sc-camel-on-mouse-down="{{ W.prognos.onDown }}" sc-camel-on-click="{{ W.prognos.open }}" style="order:{{ W.prognos.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.prognos.glow }};opacity:{{ W.prognos.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.prognos.hideDown }}" sc-camel-on-click="{{ W.prognos.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.prognos.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -768,7 +768,7 @@
 
         <!-- WIDGET: AI-notiser -->
         <sc-if value="{{ W.ai.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="ai" sc-camel-on-mouse-down="{{ W.ai.onDown }}" sc-camel-on-click="{{ W.ai.open }}" style="order:{{ W.ai.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.ai.glow }};opacity:{{ W.ai.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="ai" sc-camel-on-mouse-down="{{ W.ai.onDown }}" sc-camel-on-click="{{ W.ai.open }}" style="order:{{ W.ai.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.ai.glow }};opacity:{{ W.ai.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.ai.hideDown }}" sc-camel-on-click="{{ W.ai.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.ai.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -804,7 +804,7 @@
 
         <!-- WIDGET: Regnmätare (SMHI · Försvarsmakten · DMI) -->
         <sc-if value="{{ W.matare.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="matare" sc-camel-on-mouse-down="{{ W.matare.onDown }}" sc-camel-on-click="{{ W.matare.open }}" style="order:{{ W.matare.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.matare.glow }};opacity:{{ W.matare.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="matare" sc-camel-on-mouse-down="{{ W.matare.onDown }}" sc-camel-on-click="{{ W.matare.open }}" style="order:{{ W.matare.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.matare.glow }};opacity:{{ W.matare.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.matare.hideDown }}" sc-camel-on-click="{{ W.matare.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.matare.onClick }}" title="Dra för att flytta · klicka på kortet för alla mätare" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -841,7 +841,7 @@
 
         <!-- WIDGET: Anmälningar (översvämning, CRM) -->
         <sc-if value="{{ W.anmal.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="anmal" sc-camel-on-mouse-down="{{ W.anmal.onDown }}" sc-camel-on-click="{{ W.anmal.open }}" style="order:{{ W.anmal.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.anmal.glow }};opacity:{{ W.anmal.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="anmal" sc-camel-on-mouse-down="{{ W.anmal.onDown }}" sc-camel-on-click="{{ W.anmal.open }}" style="order:{{ W.anmal.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.anmal.glow }};opacity:{{ W.anmal.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.anmal.hideDown }}" sc-camel-on-click="{{ W.anmal.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.anmal.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -873,7 +873,7 @@
 
         <!-- WIDGET: Aktiva alarm -->
         <sc-if value="{{ W.alarm.inLeft }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="alarm" sc-camel-on-mouse-down="{{ W.alarm.onDown }}" sc-camel-on-click="{{ W.alarm.open }}" style="order:{{ W.alarm.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.alarm.glow }};opacity:{{ W.alarm.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="alarm" sc-camel-on-mouse-down="{{ W.alarm.onDown }}" sc-camel-on-click="{{ W.alarm.open }}" style="order:{{ W.alarm.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.alarm.glow }};opacity:{{ W.alarm.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.alarm.hideDown }}" sc-camel-on-click="{{ W.alarm.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.alarm.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1165,7 +1165,7 @@
 
         <!-- Så räknar vi återkomsttid (Dahlström 2010 / Svenskt Vatten P104) -->
         <sc-if value="{{ rpInfoOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;bottom:130px;left:50%;transform:translateX(-50%);z-index:8;width:600px;padding:16px 18px;border-radius:14px;background:rgba(6,18,26,.94);border:1px solid rgba(var(--acg,53,214,242),.32);backdrop-filter:blur(12px);box-shadow:0 14px 40px rgba(0,0,0,.55)">
+          <div class="mo-rise-x" style="position:absolute;bottom:130px;left:50%;transform:translateX(-50%);z-index:8;width:600px;padding:16px 18px;border-radius:14px;background:rgba(6,18,26,.94);border:1px solid rgba(var(--acg,53,214,242),.32);backdrop-filter:blur(12px);box-shadow:0 14px 40px rgba(0,0,0,.55)">
             <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
               <span style="width:6px;height:6px;border-radius:1px;background:var(--ac,#35d6f2);box-shadow:0 0 8px var(--ac,#35d6f2)"></span>
               <sc-if value="{{ skyModeRp }}" hint-placeholder-val="{{ true }}"><span style="font-size:11px;letter-spacing:.18em;color:#8fcfe0;font-weight:600;text-transform:uppercase">Så räknar vi · Version 1</span></sc-if>
@@ -1433,7 +1433,7 @@
 
         <!-- WIDGET: Flödesmätare (ledningsnät + pumpstationer) -->
         <sc-if value="{{ W.flode.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="flode" sc-camel-on-mouse-down="{{ W.flode.onDown }}" sc-camel-on-click="{{ W.flode.open }}" style="order:{{ W.flode.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.flode.glow }};opacity:{{ W.flode.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="flode" sc-camel-on-mouse-down="{{ W.flode.onDown }}" sc-camel-on-click="{{ W.flode.open }}" style="order:{{ W.flode.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.flode.glow }};opacity:{{ W.flode.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.flode.hideDown }}" sc-camel-on-click="{{ W.flode.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.flode.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1472,7 +1472,7 @@
 
         <!-- WIDGET: Dricksvatten -->
         <sc-if value="{{ W.dricks.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="dricks" sc-camel-on-mouse-down="{{ W.dricks.onDown }}" sc-camel-on-click="{{ W.dricks.open }}" style="order:{{ W.dricks.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dricks.glow }};opacity:{{ W.dricks.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="dricks" sc-camel-on-mouse-down="{{ W.dricks.onDown }}" sc-camel-on-click="{{ W.dricks.open }}" style="order:{{ W.dricks.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dricks.glow }};opacity:{{ W.dricks.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.dricks.hideDown }}" sc-camel-on-click="{{ W.dricks.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.dricks.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1520,7 +1520,7 @@
 
         <!-- WIDGET: Spillvatten -->
         <sc-if value="{{ W.spill.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="spill" sc-camel-on-mouse-down="{{ W.spill.onDown }}" sc-camel-on-click="{{ W.spill.open }}" style="order:{{ W.spill.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.spill.glow }};opacity:{{ W.spill.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="spill" sc-camel-on-mouse-down="{{ W.spill.onDown }}" sc-camel-on-click="{{ W.spill.open }}" style="order:{{ W.spill.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.spill.glow }};opacity:{{ W.spill.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.spill.hideDown }}" sc-camel-on-click="{{ W.spill.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.spill.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1551,7 +1551,7 @@
 
         <!-- WIDGET: Dagvatten -->
         <sc-if value="{{ W.dag.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="dag" sc-camel-on-mouse-down="{{ W.dag.onDown }}" sc-camel-on-click="{{ W.dag.open }}" style="order:{{ W.dag.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dag.glow }};opacity:{{ W.dag.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="dag" sc-camel-on-mouse-down="{{ W.dag.onDown }}" sc-camel-on-click="{{ W.dag.open }}" style="order:{{ W.dag.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.dag.glow }};opacity:{{ W.dag.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.dag.hideDown }}" sc-camel-on-click="{{ W.dag.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.dag.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1586,7 +1586,7 @@
 
         <!-- WIDGET: Havsvattenstånd -->
         <sc-if value="{{ W.hav.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="hav" sc-camel-on-mouse-down="{{ W.hav.onDown }}" sc-camel-on-click="{{ W.hav.open }}" style="order:{{ W.hav.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.hav.glow }};opacity:{{ W.hav.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="hav" sc-camel-on-mouse-down="{{ W.hav.onDown }}" sc-camel-on-click="{{ W.hav.open }}" style="order:{{ W.hav.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.hav.glow }};opacity:{{ W.hav.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42);overflow:hidden">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.hav.hideDown }}" sc-camel-on-click="{{ W.hav.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.hav.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1621,7 +1621,7 @@
 
         <!-- WIDGET: Väderradar + vind -->
         <sc-if value="{{ W.radar.inRight }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="radar" sc-camel-on-mouse-down="{{ W.radar.onDown }}" sc-camel-on-click="{{ W.radar.open }}" style="order:{{ W.radar.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.radar.glow }};opacity:{{ W.radar.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="radar" sc-camel-on-mouse-down="{{ W.radar.onDown }}" sc-camel-on-click="{{ W.radar.open }}" style="order:{{ W.radar.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.radar.glow }};opacity:{{ W.radar.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
             <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
                 <span sc-camel-on-mouse-down="{{ W.radar.hideDown }}" sc-camel-on-click="{{ W.radar.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.radar.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1699,7 +1699,7 @@
 
         <!-- WIDGET: Prognoser -->
         <sc-if value="{{ W.prognos.inRight }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="prognos" sc-camel-on-mouse-down="{{ W.prognos.onDown }}" sc-camel-on-click="{{ W.prognos.open }}" style="order:{{ W.prognos.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.prognos.glow }};opacity:{{ W.prognos.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="prognos" sc-camel-on-mouse-down="{{ W.prognos.onDown }}" sc-camel-on-click="{{ W.prognos.open }}" style="order:{{ W.prognos.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.prognos.glow }};opacity:{{ W.prognos.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 13px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.prognos.hideDown }}" sc-camel-on-click="{{ W.prognos.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.prognos.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1758,7 +1758,7 @@
 
         <!-- WIDGET: AI-notiser -->
         <sc-if value="{{ W.ai.inRight }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="ai" sc-camel-on-mouse-down="{{ W.ai.onDown }}" sc-camel-on-click="{{ W.ai.open }}" style="order:{{ W.ai.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.ai.glow }};opacity:{{ W.ai.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="ai" sc-camel-on-mouse-down="{{ W.ai.onDown }}" sc-camel-on-click="{{ W.ai.open }}" style="order:{{ W.ai.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.ai.glow }};opacity:{{ W.ai.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.ai.hideDown }}" sc-camel-on-click="{{ W.ai.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.ai.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1794,7 +1794,7 @@
 
         <!-- WIDGET: Regnmätare (SMHI · Försvarsmakten · DMI) -->
         <sc-if value="{{ W.matare.inRight }}" hint-placeholder-val="{{ false }}">
-          <div data-wid="matare" sc-camel-on-mouse-down="{{ W.matare.onDown }}" sc-camel-on-click="{{ W.matare.open }}" style="order:{{ W.matare.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.matare.glow }};opacity:{{ W.matare.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="matare" sc-camel-on-mouse-down="{{ W.matare.onDown }}" sc-camel-on-click="{{ W.matare.open }}" style="order:{{ W.matare.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.matare.glow }};opacity:{{ W.matare.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.matare.hideDown }}" sc-camel-on-click="{{ W.matare.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.matare.onClick }}" title="Dra för att flytta · klicka på kortet för alla mätare" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1831,7 +1831,7 @@
 
         <!-- WIDGET: Anmälningar (översvämning, CRM) -->
         <sc-if value="{{ W.anmal.inRight }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="anmal" sc-camel-on-mouse-down="{{ W.anmal.onDown }}" sc-camel-on-click="{{ W.anmal.open }}" style="order:{{ W.anmal.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.anmal.glow }};opacity:{{ W.anmal.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="anmal" sc-camel-on-mouse-down="{{ W.anmal.onDown }}" sc-camel-on-click="{{ W.anmal.open }}" style="order:{{ W.anmal.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.anmal.glow }};opacity:{{ W.anmal.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.anmal.hideDown }}" sc-camel-on-click="{{ W.anmal.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.anmal.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1863,7 +1863,7 @@
 
         <!-- WIDGET: Aktiva alarm -->
         <sc-if value="{{ W.alarm.inRight }}" hint-placeholder-val="{{ true }}">
-          <div data-wid="alarm" sc-camel-on-mouse-down="{{ W.alarm.onDown }}" sc-camel-on-click="{{ W.alarm.open }}" style="order:{{ W.alarm.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.alarm.glow }};opacity:{{ W.alarm.dim }};transition:box-shadow .2s, opacity .2s, transform .15s;touch-action:none;cursor:pointer" style-hover="transform:translateY(-3px)">
+          <div data-wid="alarm" sc-camel-on-mouse-down="{{ W.alarm.onDown }}" sc-camel-on-click="{{ W.alarm.open }}" style="order:{{ W.alarm.order }};display:flex;flex-direction:column;flex:0 0 auto;border-radius:15px;box-shadow:{{ W.alarm.glow }};opacity:{{ W.alarm.dim }};transition:box-shadow .2s, opacity .2s, transform .28s cubic-bezier(.2,.9,.25,1);touch-action:none;cursor:pointer" class="mo-card">
           <div style="position:relative;border-radius:15px;padding:14px 16px 12px;background:linear-gradient(160deg, rgba(18,42,54,.5), rgba(7,18,26,.34));border:1px solid rgba(74,196,224,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(150,230,245,.07), 0 10px 40px rgba(0,0,0,.42)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:22px">
               <span sc-camel-on-mouse-down="{{ W.alarm.hideDown }}" sc-camel-on-click="{{ W.alarm.hide }}" title="Dölj widget · återställ under Inställningar" style="position:absolute;top:8px;right:9px;z-index:5;width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#577684;font-size:11px;line-height:1;background:rgba(8,22,30,.55);border:1px solid rgba(74,196,224,.18);user-select:none" style-hover="color:#eaf7fb;border-color:var(--ac,#35d6f2)">✕</span><span sc-camel-on-click="{{ W.alarm.onClick }}" title="Dra för att flytta · klicka på kortet för detaljvy" style="cursor:grab;color:#3f5e69;font-size:14px;letter-spacing:-3px;user-select:none">⠿</span>
@@ -1902,8 +1902,8 @@
 
     <!-- ---------- WIDGET DETAIL OVERLAY ---------- -->
     <sc-if value="{{ wdet.open }}" hint-placeholder-val="{{ false }}">
-      <div sc-camel-on-click="{{ wdet.close }}" style="position:absolute;inset:0;z-index:60;background:rgba(2,7,9,.62);backdrop-filter:blur(4px)"></div>
-      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;width:1180px;max-width:94%;max-height:88%;border-radius:18px;padding:24px 28px 26px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden">
+      <div sc-camel-on-click="{{ wdet.close }}" class="mo-backdrop {{ mo.wdet }}" style="position:absolute;inset:0;z-index:60;background:rgba(2,7,9,.62);backdrop-filter:blur(4px)"></div>
+      <div class="mo-zoom {{ mo.wdet }}" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;width:1180px;max-width:94%;max-height:88%;border-radius:18px;padding:24px 28px 26px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;{{ wdet.zoomVars }}">
         <div style="display:flex;align-items:center;gap:13px;flex:0 0 auto;margin-bottom:18px">
           <span style="width:9px;height:9px;border-radius:50%;background:var(--ac,#35d6f2);box-shadow:0 0 12px var(--ac,#35d6f2)"></span>
           <div style="flex:1 1 auto">
@@ -1925,7 +1925,7 @@
         <!-- ===== WIDGET OVERVIEW ===== -->
         <sc-if value="{{ wdet.muniClosed }}" hint-placeholder-val="{{ true }}">
         <!-- KPI grid -->
-        <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:12px;flex:0 0 auto;margin-bottom:18px">
+        <div class="mo-stagger" style="display:grid;grid-template-columns:repeat(6, 1fr);gap:12px;flex:0 0 auto;margin-bottom:18px">
           <sc-for list="{{ wdet.kpis }}" as="k" hint-placeholder-count="6">
             <div style="padding:13px 14px;border-radius:12px;background:rgba(8,22,30,.5);border:1px solid rgba(74,196,224,.14)">
               <div style="font-size:9.5px;letter-spacing:.13em;color:#577684;text-transform:uppercase">{{k.label}}</div>
@@ -1934,7 +1934,7 @@
           </sc-for>
         </div>
 
-        <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:4px">
+        <div class="mo-stagger mo-stagger-late" style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:4px">
           <!-- history chart -->
           <sc-if value="{{ wdet.seaNote }}" hint-placeholder-val="{{ false }}">
             <div style="font-size:11.5px;line-height:1.5;color:#9bc3d0;padding:9px 12px;border-radius:10px;background:rgba(8,22,30,.45);border:1px solid rgba(74,196,224,.14)">{{wdet.seaNote}}</div>
@@ -1942,7 +1942,7 @@
           <sc-if value="{{ wdet.histLabel }}" hint-placeholder-val="{{ false }}">
             <div>
               <div style="font-size:10px;letter-spacing:.14em;color:#577684;text-transform:uppercase;margin-bottom:10px">{{wdet.histLabel}}</div>
-              <div style="display:flex;align-items:flex-end;gap:3px;height:150px">
+              <div class="mo-bars" style="display:flex;align-items:flex-end;gap:3px;height:150px">
                 <sc-for list="{{ wdet.hist }}" as="b" hint-placeholder-count="24">
                   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px">
                     <div style="width:100%;height:{{b.h}}%;border-radius:3px 3px 0 0;background:{{b.color}}"></div>
@@ -1951,7 +1951,7 @@
                 </sc-for>
               </div>
               <sc-if value="{{ wdet.hist2length }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:4px">
+                <div class="mo-bars mo-bars-flat" style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:4px">
                   <sc-for list="{{ wdet.hist2 }}" as="b" hint-placeholder-count="24">
                     <div style="flex:1;height:{{b.h}}%;border-radius:3px 3px 0 0;background:{{b.color}}"></div>
                   </sc-for>
@@ -2039,7 +2039,7 @@
                 <span style="width:22px"></span>
               </div>
               <sc-for list="{{ wdet.rows }}" as="r" hint-placeholder-count="8">
-                <div sc-camel-on-click="{{ r.ropen }}" title="Öppna kommunens detaljer" style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(74,196,224,.07);cursor:pointer;border-radius:8px;transition:background .14s" style-hover="background:rgba(53,214,242,.08)">
+                <div sc-camel-on-click="{{ r.ropen }}" title="Öppna kommunens detaljer" class="mo-row" style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(74,196,224,.07);cursor:pointer;border-radius:8px;transition:background .14s" style-hover="background:rgba(53,214,242,.08)">
                   <span style="flex:2;font-size:13px;color:#dcecf2">{{r.name}}</span>
                   <span style="flex:1;font-family:'JetBrains Mono';font-size:12px;color:#aecede;text-align:right">{{r.c1}}</span>
                   <span style="flex:1;font-family:'JetBrains Mono';font-size:12px;color:{{r.c2color}};text-align:right">{{r.c2}}</span>
@@ -2099,7 +2099,7 @@
           <sc-if value="{{ wdet.noticeslength }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:10px">
               <sc-for list="{{ wdet.notices }}" as="a" hint-placeholder-count="5">
-                <div style="display:flex;gap:12px;padding:13px 15px;border-radius:11px;background:{{a.bg}};border:1px solid {{a.border}}">
+                <div class="mo-row" style="display:flex;gap:12px;padding:13px 15px;border-radius:11px;background:{{a.bg}};border:1px solid {{a.border}}">
                   <div style="width:3px;flex:0 0 auto;border-radius:2px;background:{{a.sevColor}};box-shadow:0 0 8px {{a.sevColor}}"></div>
                   <div style="flex:1 1 auto">
                     <div style="display:flex;align-items:center;gap:9px">
@@ -2118,7 +2118,7 @@
           <sc-if value="{{ wdet.reportslength }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:9px">
               <sc-for list="{{ wdet.reports }}" as="r" hint-placeholder-count="6">
-                <div sc-camel-on-click="{{ r.open }}" title="Visa kommunen på kartan" style="display:flex;gap:12px;padding:12px 14px;border-radius:10px;background:{{r.bg}};border:1px solid {{r.border}};cursor:pointer" style-hover="border-color:var(--ac,#35d6f2)">
+                <div sc-camel-on-click="{{ r.open }}" title="Visa kommunen på kartan" class="mo-row" style="display:flex;gap:12px;padding:12px 14px;border-radius:10px;background:{{r.bg}};border:1px solid {{r.border}};cursor:pointer" style-hover="border-color:var(--ac,#35d6f2)">
                   <div style="width:3px;flex:0 0 auto;border-radius:2px;background:{{r.sevColor}};box-shadow:0 0 8px {{r.sevColor}}"></div>
                   <div style="flex:1 1 auto;min-width:0">
                     <div style="display:flex;align-items:center;gap:9px">
@@ -2139,7 +2139,7 @@
           <sc-if value="{{ wdet.alarmslength }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:9px">
               <sc-for list="{{ wdet.alarms }}" as="a" hint-placeholder-count="6">
-                <div style="display:flex;gap:12px;padding:11px 14px;border-radius:10px;background:{{a.bg}};border:1px solid {{a.border}}">
+                <div class="mo-row" style="display:flex;gap:12px;padding:11px 14px;border-radius:10px;background:{{a.bg}};border:1px solid {{a.border}}">
                   <div style="width:3px;flex:0 0 auto;border-radius:2px;background:{{a.color}};box-shadow:0 0 8px {{a.color}}"></div>
                   <div style="flex:1 1 auto">
                     <div style="display:flex;align-items:center;gap:9px">
@@ -2158,11 +2158,11 @@
 
         <!-- ===== MUNICIPALITY SUB-VIEW ===== -->
         <sc-if value="{{ wdet.muniOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;align-items:baseline;gap:10px;flex:0 0 auto;margin-bottom:14px">
+          <div class="mo-slide-in" style="display:flex;align-items:baseline;gap:10px;flex:0 0 auto;margin-bottom:14px">
             <span style="font-size:10px;letter-spacing:.2em;color:var(--ac,#35d6f2);text-transform:uppercase">Kommun</span>
             <span style="font-size:19px;font-weight:700;color:#eaf7fb;letter-spacing:.02em">{{wdet.muni.name}}</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:12px;flex:0 0 auto;margin-bottom:18px">
+          <div class="mo-stagger" style="display:grid;grid-template-columns:repeat(6, 1fr);gap:12px;flex:0 0 auto;margin-bottom:18px">
             <sc-for list="{{ wdet.muni.kpis }}" as="k" hint-placeholder-count="6">
               <div style="padding:13px 14px;border-radius:12px;background:rgba(8,22,30,.5);border:1px solid rgba(74,196,224,.14)">
                 <div style="font-size:9.5px;letter-spacing:.13em;color:#577684;text-transform:uppercase">{{k.label}}</div>
@@ -2170,10 +2170,10 @@
               </div>
             </sc-for>
           </div>
-          <div style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:4px">
+          <div class="mo-stagger mo-stagger-late" style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:4px">
             <div>
               <div style="font-size:10px;letter-spacing:.14em;color:#577684;text-transform:uppercase;margin-bottom:10px">{{wdet.muni.histLabel}}</div>
-              <div style="display:flex;align-items:flex-end;gap:3px;height:150px">
+              <div class="mo-bars" style="display:flex;align-items:flex-end;gap:3px;height:150px">
                 <sc-for list="{{ wdet.muni.hist }}" as="b" hint-placeholder-count="24">
                   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px">
                     <div style="width:100%;height:{{b.h}}%;border-radius:3px 3px 0 0;background:{{b.color}}"></div>
@@ -2182,7 +2182,7 @@
                 </sc-for>
               </div>
               <sc-if value="{{ wdet.muni.hist2length }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:4px">
+                <div class="mo-bars mo-bars-flat" style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:4px">
                   <sc-for list="{{ wdet.muni.hist2 }}" as="b" hint-placeholder-count="24">
                     <div style="flex:1;height:{{b.h}}%;border-radius:3px 3px 0 0;background:{{b.color}}"></div>
                   </sc-for>
@@ -2260,8 +2260,8 @@
     <!-- ---------- CONVERSATION PANEL ---------- -->
     <!-- ---------- UNDERLAG FÖR VARNING ---------- -->
     <sc-if value="{{ evd.open }}" hint-placeholder-val="{{ false }}">
-      <div sc-camel-on-click="{{ evd.close }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
-      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:1100px;max-width:95%;max-height:90%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:16px">
+      <div sc-camel-on-click="{{ evd.close }}" class="mo-backdrop {{ mo.evd }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
+      <div class="mo-pop {{ mo.evd }}" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:1100px;max-width:95%;max-height:90%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:16px">
         <div style="display:flex;align-items:center;gap:13px">
           <div style="flex:1 1 auto">
             <div style="font-size:10px;letter-spacing:.2em;color:var(--ac,#35d6f2);text-transform:uppercase">Underlag · {{evd.place}} · {{evd.hourTxt}}</div>
@@ -2338,8 +2338,8 @@
 
     <!-- ---------- RADAR DETAIL ---------- -->
     <sc-if value="{{ rd.open }}" hint-placeholder-val="{{ false }}">
-      <div sc-camel-on-click="{{ rd.close }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
-      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:1040px;max-width:94%;max-height:88%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:18px">
+      <div sc-camel-on-click="{{ rd.close }}" class="mo-backdrop {{ mo.rd }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
+      <div class="mo-pop {{ mo.rd }}" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:1040px;max-width:94%;max-height:88%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:18px">
         <div style="display:flex;align-items:center;gap:13px">
           <div style="width:14px;height:14px;border-radius:50%;background:{{rd.color}};box-shadow:0 0 0 3px rgba(6,18,26,.9),0 0 12px {{rd.color}}"></div>
           <div style="flex:1 1 auto">
@@ -2409,8 +2409,8 @@
 
     <!-- ---------- REGNMÄTARE DETAIL ---------- -->
     <sc-if value="{{ gd.open }}" hint-placeholder-val="{{ false }}">
-      <div sc-camel-on-click="{{ gd.close }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
-      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:980px;max-width:94%;max-height:88%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:18px">
+      <div sc-camel-on-click="{{ gd.close }}" class="mo-backdrop {{ mo.gd }}" style="position:absolute;inset:0;z-index:58;background:rgba(2,7,9,.55);backdrop-filter:blur(3px)"></div>
+      <div class="mo-pop {{ mo.gd }}" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:59;width:980px;max-width:94%;max-height:88%;overflow-y:auto;border-radius:18px;padding:22px 26px 24px;background:linear-gradient(160deg, rgba(13,33,44,.97), rgba(6,16,23,.97));border:1px solid rgba(var(--acg,53,214,242),.3);box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:18px">
         <div style="display:flex;align-items:center;gap:13px">
           <div style="width:14px;height:14px;transform:rotate(45deg);border-radius:3px;background:#4aacff;border:1.5px solid #eaf7fb;box-shadow:0 0 10px #4aacff"></div>
           <div style="flex:1 1 auto">
@@ -2550,7 +2550,7 @@
     </sc-if>
     <!-- expanded chat: compact widget docked bottom-right, so the map stays visible -->
     <sc-if value="{{ chatFullShown }}" hint-placeholder-val="{{ false }}">
-      <div style="position:absolute;right:28px;bottom:108px;width:440px;max-height:360px;border-radius:15px;padding:14px 16px;background:linear-gradient(160deg, rgba(12,32,42,.92), rgba(5,15,22,.9));border:1px solid rgba(var(--acg,53,214,242),.28);backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;z-index:20">
+      <div class="mo-rise-br" style="position:absolute;right:28px;bottom:108px;width:440px;max-height:360px;border-radius:15px;padding:14px 16px;background:linear-gradient(160deg, rgba(12,32,42,.92), rgba(5,15,22,.9));border:1px solid rgba(var(--acg,53,214,242),.28);backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;z-index:20">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;flex:0 0 auto">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--ac,#35d6f2);box-shadow:0 0 10px var(--ac,#35d6f2)"></span>
           <span style="font-size:11px;letter-spacing:.2em;color:#8fcfe0;text-transform:uppercase;font-weight:600">MR. Hydra</span>
