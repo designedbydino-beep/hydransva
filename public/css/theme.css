@@ -1,0 +1,20 @@
+/* ===== DESIGN 2 — NSVA grafisk profil (Ubuntu · Blå 01–04 · Turkos · Röd), still a dark futuristic control room ===== */
+  .nsva-d2, .nsva-d2 *{font-family:'Ubuntu',system-ui,sans-serif!important}
+  .nsva-d2 [style*="JetBrains Mono"], .nsva-d2 [style*="JetBrains Mono"] *{font-family:'Ubuntu Mono',ui-monospace,monospace!important;letter-spacing:0!important}
+  .nsva-d2[data-screen-label]{background:radial-gradient(120% 95% at 50% -12%, #0b5a8a 0%, #004268 30%, #002a45 62%, #001a2d 100%)!important}
+  /* glass panels → deep navy glass with a Blå 04 hairline */
+  .nsva-d2 [style*="rgba(18, 42, 54"], .nsva-d2 [style*="rgba(14, 34, 44"], .nsva-d2 [style*="rgba(13, 33, 44"], .nsva-d2 [style*="rgba(12, 30, 40"], .nsva-d2 [style*="rgba(12, 32, 42"]{background:linear-gradient(165deg, rgba(0,111,185,.22), rgba(0,40,69,.55))!important;border-color:rgba(188,228,250,.2)!important;box-shadow:inset 0 1px 0 rgba(188,228,250,.12), 0 14px 40px rgba(0,20,36,.55)!important}
+  .nsva-d2 [style*="rgba(8, 22, 30"], .nsva-d2 [style*="rgba(6, 18, 26"], .nsva-d2 [style*="rgba(5, 16, 24"], .nsva-d2 [style*="rgba(4, 12, 19"], .nsva-d2 [style*="rgba(3, 10, 15"]{background-color:rgba(0,34,58,.72)!important}
+  .nsva-d2 [style*="border: 1px solid rgba(74, 196, 224"]{border-color:rgba(188,228,250,.16)!important}
+  /* type colours → NSVA Blå tones */
+  .nsva-d2 [style*="color: rgb(87, 118, 132)"], .nsva-d2 [style*="color: rgb(75, 108, 120)"], .nsva-d2 [style*="color: rgb(94, 132, 146)"]{color:#8fb6cf!important}
+  .nsva-d2 [style*="color: rgb(143, 207, 224)"], .nsva-d2 [style*="color: rgb(111, 185, 203)"], .nsva-d2 [style*="color: rgb(127, 208, 226)"], .nsva-d2 [style*="color: rgb(191, 233, 244)"]{color:#bce4fa!important}
+  .nsva-d2 [style*="color: rgb(127, 168, 181)"], .nsva-d2 [style*="color: rgb(155, 195, 208)"]{color:#a9cbe0!important}
+  /* status: Turkos for OK, NSVA Röd for critical (amber kept for warnings — no yellow in the profile) */
+  .nsva-d2 [style*="color: rgb(47, 230, 196)"]{color:#3cc8c2!important}
+  .nsva-d2 [style*="background: rgb(47, 230, 196)"]{background:#3cc8c2!important}
+  .nsva-d2 [style*="color: rgb(255, 90, 110)"]{color:#ff7a4a!important}
+  .nsva-d2 [style*="background: rgb(255, 90, 110)"]{background:#e84d0e!important}
+  /* calmer, more editorial headings — less tracking, sentence-case feel */
+  .nsva-d2 [style*="letter-spacing: 0.36em"], .nsva-d2 [style*="letter-spacing: 0.28em"], .nsva-d2 [style*="letter-spacing: 0.24em"]{letter-spacing:.14em!important}
+  .nsva-d2 [style*="letter-spacing: 0.2em"], .nsva-d2 [style*="letter-spacing: 0.18em"], .nsva-d2 [style*="letter-spacing: 0.16em"]{letter-spacing:.1em!important}
