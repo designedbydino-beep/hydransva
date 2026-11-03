@@ -60,10 +60,10 @@
     energi: { label: 'Energi', col: '#ffd65a', g: 'E' },
   };
   const LENS_PRESET = {
-    oversikt: { net: 'dricks', color: 'typ', cats: ['flode', 'niva', 'regn', 'hav', 'kvalitet'], layers: { terrain: true, streams: true, sinks: true, fac: true, dev: true, trunks: true, sea: false, flow: true, leaks: false, sens: true, bradd: true, bad: false } },
+    oversikt: { net: 'dricks', color: 'typ', cats: ['flode', 'niva', 'regn', 'hav', 'kvalitet'], layers: { terrain: true, streams: true, sinks: true, fac: true, dev: true, trunks: true, sea: false, flow: false, leaks: false, sens: true, bradd: true, bad: false } },
     produktion: { net: 'dricks', color: 'tryck', cats: ['flode', 'niva', 'kvalitet', 'grund', 'energi'], layers: { terrain: true, streams: false, sinks: false, fac: true, dev: false, trunks: true, sea: false, flow: false, leaks: false, sens: true, bradd: false, bad: false } },
     distribution: { net: 'dricks', color: 'risk', cats: ['flode', 'tryck', 'lacka', 'niva', 'kvalitet'], layers: { terrain: true, streams: false, sinks: false, fac: true, dev: false, trunks: true, sea: false, flow: false, leaks: true, sens: true, bradd: true, bad: false } },
-    samhalle: { net: 'dag', color: 'belastning', cats: ['regn', 'hav', 'niva'], layers: { terrain: true, streams: true, sinks: true, fac: false, dev: true, trunks: true, sea: true, flow: true, leaks: false, sens: false, bradd: true, bad: true } },
+    samhalle: { net: 'dag', color: 'belastning', cats: ['regn', 'hav', 'niva'], layers: { terrain: true, streams: true, sinks: true, fac: false, dev: true, trunks: true, sea: true, flow: false, leaks: false, sens: false, bradd: true, bad: true } },
   };
   const LAYER_DEFS = [
     ['terrain', 'Terräng (höjdmodell)', '#8fb4a0'], ['streams', 'Rinnvägar', COL.water], ['sinks', 'Instängda lågpunkter', COL.vio],
@@ -578,7 +578,7 @@
   function syncSinks(force) {
     D.sinks.forEach(s => {
       const hh = s.V > 0 ? (s.lv == null ? sinkLevel(s) : s.lv) : null;
-      const key = hh == null ? 'dry' : hh.toFixed(2);
+      const key = hh == null ? 'dry' : String(Math.round(hh * 20));
       if (!force && s._key === key) return;
       s._key = key; s.hh = hh; drawSink(s);
       const el = s._mk && s._mk.getElement && s._mk.getElement();
@@ -628,7 +628,7 @@
     const lg = layers.bradd; if (!lg) return;
     const z = map.getZoom();
     D.bps.forEach(b => {
-      const key = (b.now > 0 ? 'a' : b._risk ? 'r' : 'o') + Math.round(b.vol / 10) + (z >= 12 ? 'z' : '');
+      const key = (b.now > 0 ? 'a' : b._risk ? 'r' : 'o') + (z >= 12 ? 'z' + (b.vol > 0 ? Math.round(Math.log2(b.vol + 1) * 4) : '') : '');
       if (b._key !== key) { b._key = key; b._mk.setIcon(L.divIcon({ className: '', iconSize: [0, 0], html: bpIcon(b) })); }
       const want = S.layers.bradd && (z >= 10.5 || b.now > 0 || b.vol > 0);
       if (want !== lg.hasLayer(b._mk)) want ? lg.addLayer(b._mk) : lg.removeLayer(b._mk);
@@ -652,12 +652,12 @@
   }
   function syncSensors() {
     const lg = layers.sens; if (!lg) return;
-    const z = map.getZoom();
+    const z = map.getZoom(), vb = map.getBounds().pad(0.25);
     S._m = model();
     D.sens.forEach(sn => {
       const v = sensVal(sn); sn._v = v;
       if (sn._st !== v.st) { sn._st = v.st; sn._mk.setIcon(L.divIcon({ className: '', iconSize: [0, 0], html: sensIcon(sn, v.st) })); }
-      const want = S.layers.sens && S.cats.includes(sn.cat) && (z >= 11 || sn.cat === 'regn' || sn.cat === 'hav' || v.st === 'bad');
+      const want = S.layers.sens && S.cats.includes(sn.cat) && (z >= 11 || sn.cat === 'regn' || sn.cat === 'hav' || v.st === 'bad') && vb.contains([sn.lat, sn.lng]);
       if (want !== lg.hasLayer(sn._mk)) want ? lg.addLayer(sn._mk) : lg.removeLayer(sn._mk);
     });
   }
@@ -675,49 +675,53 @@
     const onMove = () => { L.DomUtil.setPosition(cv, map.containerPointToLayerPoint([0, 0])); clear(); };
     map.on('move zoom viewreset', onMove); map.on('resize', size); map.on('zoomanim', clear);
     onMove();
-    const proj = (lat, lng) => map.latLngToContainerPoint([lat, lng]);
-    const cellLL = (fi, fj) => [G.n - fj * G.dlat, G.w + fi * G.dlng];
+    // cheap projection for the current view: lng → x is linear, lat → y via the Mercator formula
+    let pr = null;
+    const setProj = () => { const z = map.getZoom(), sc = 256 * 2 ** z, o = map.latLngToContainerPoint([G.n, G.w]); pr = { sc, ox: o.x - (G.w + 180) / 360 * sc, oy: o.y - mercY(G.n) * sc }; };
+    const X = lng => (lng + 180) / 360 * pr.sc + pr.ox, Y = lat => mercY(lat) * pr.sc + pr.oy;
+    const BUCKETS = [0, 1, 2, 3].map(b => ({ style: 'rgba(' + Math.round(150 - b * 30) + ',' + Math.round(215 - b * 16) + ',255,' + (0.5 + b * 0.15).toFixed(2) + ')', w: 1 + b * 0.6, segs: [] }));
+    let odd = false;
     function frame(t) {
       raf = requestAnimationFrame(frame);
-      const dt = Math.min(64, t - last); last = t;
       if (!S.layers.flow) { if (!cleared) clear(); P.length = 0; return; }
+      if ((odd = !odd)) return; // 30 fps is plenty for drifting water
+      const dt = Math.min(80, t - last); last = t;
       const i = intensity();
-      const z = map.getZoom(), cellPx = 100 / (156543.03 * Math.cos(56 * Math.PI / 180) / 2 ** z);
-      g.globalCompositeOperation = 'destination-in'; g.fillStyle = 'rgba(0,0,0,0.9)'; g.fillRect(0, 0, cv.width, cv.height);
+      setProj();
+      const cellPx = 100 / (156543.03 * Math.cos(56 * Math.PI / 180) / (pr.sc / 256));
+      g.globalCompositeOperation = 'destination-in'; g.fillStyle = 'rgba(0,0,0,0.86)'; g.fillRect(0, 0, cv.width, cv.height);
       g.globalCompositeOperation = 'source-over'; cleared = false;
       // dry weather: a calm stream of particles along the rinnvägar only; rain: everywhere, more the harder it rains
-      const wet = i > 0.2, b = map.getBounds(), want = wet ? Math.min(2600, Math.round(i * 90 + 200)) : 320;
-      let spawn = Math.min(60, Math.max(0, want - P.length));
+      const wet = i > 0.2, b = map.getBounds(), want = wet ? Math.min(1400, Math.round(i * 50 + 150)) : 220;
+      let spawn = Math.min(50, Math.max(0, want - P.length));
       while (spawn-- > 0) {
         const lat = b.getSouth() + Math.random() * (b.getNorth() - b.getSouth()), lng = b.getWest() + Math.random() * (b.getEast() - b.getWest());
         const fi = (lng - G.w) / G.dlng, fj = (G.n - lat) / G.dlat, k = Math.floor(fj) * nx + Math.floor(fi);
         if (fi < 0 || fj < 0 || fi >= nx || fj >= ny || !D.dir[k] || (!wet && D.acc[k] < 40)) continue;
-        P.push({ fi, fj, k, age: 0, life: 140 + Math.random() * 160 });
+        P.push({ fi, fj, k, age: 0, life: 70 + Math.random() * 80 });
       }
       const speed = clamp(1.6 / cellPx, 0.02, 0.9) * dt / 16;
-      g.lineCap = 'round';
+      BUCKETS.forEach(bk => { bk.segs.length = 0; });
       for (let n = P.length - 1; n >= 0; n--) {
         const p = P[n], r = D.recv[p.k];
-        if (r < 0 || p.age++ > p.life) { P.splice(n, 1); continue; }
+        if (r < 0 || p.age++ > p.life) { P[n] = P[P.length - 1]; P.pop(); continue; }
         const ti = r % nx + 0.5, tj = ((r / nx) | 0) + 0.5, dx = ti - p.fi, dy = tj - p.fj, dl = Math.hypot(dx, dy);
-        const a0 = proj(...cellLL(p.fi, p.fj));
+        const x0 = X(G.w + p.fi * G.dlng), y0 = Y(G.n - p.fj * G.dlat);
         const acc = D.acc[p.k], sp = speed * (1 + Math.min(2.5, Math.log10(acc) * 0.6));
         if (dl <= sp) { p.fi = ti; p.fj = tj; p.k = r; } else { p.fi += dx / dl * sp; p.fj += dy / dl * sp; }
-        const a1 = proj(...cellLL(p.fi, p.fj));
-        const strong = Math.min(1, Math.log10(acc) / 3.2);
-        g.strokeStyle = 'rgba(' + Math.round(150 - strong * 90) + ',' + Math.round(215 - strong * 50) + ',255,' + (0.45 + strong * 0.5).toFixed(2) + ')';
-        g.lineWidth = 1 + strong * 1.8;
-        g.beginPath(); g.moveTo(a0.x, a0.y); g.lineTo(a1.x, a1.y); g.stroke();
+        BUCKETS[Math.min(3, Math.floor(Math.log10(acc) / 0.9))].segs.push(x0, y0, X(G.w + p.fi * G.dlng), Y(G.n - p.fj * G.dlat));
       }
+      g.lineCap = 'round';
+      BUCKETS.forEach(bk => { const sg = bk.segs; if (!sg.length) return; g.strokeStyle = bk.style; g.lineWidth = bk.w; g.beginPath(); for (let q = 0; q < sg.length; q += 4) { g.moveTo(sg[q], sg[q + 1]); g.lineTo(sg[q + 2], sg[q + 3]); } g.stroke(); });
     }
     raf = requestAnimationFrame(frame);
     return { remove() { cancelAnimationFrame(raf); map.off('move zoom viewreset', onMove); map.off('resize', size); map.off('zoomanim', clear); cv.remove(); } };
   }
 
   function buildLayers() {
-    const cvNet = L.canvas({ pane: pane('hvNet', 410), padding: 0.4, tolerance: 5 });
-    const cvStream = L.canvas({ pane: pane('hvStream', 395), padding: 0.4, tolerance: 3 });
-    const svgTrunk = L.svg({ pane: pane('hvTrunk', 440), padding: 0.4 });
+    const cvNet = L.canvas({ pane: pane('hvNet', 410), padding: 0.15, tolerance: 5 });
+    const cvStream = L.canvas({ pane: pane('hvStream', 395), padding: 0.15, tolerance: 3 });
+    const svgTrunk = L.svg({ pane: pane('hvTrunk', 440), padding: 0.15 });
     layers.renderers = [cvNet, cvStream, svgTrunk]; // they stay on the map after their paths are gone
     pane('hvWater', 390); pane('hvFac', 615); pane('hvDev', 400); pane('hvSens', 620);
     layers.terrain = makeTerrain();
@@ -738,7 +742,7 @@
     D.trunks.forEach(t => {
       const planned = t.st === 'planerad';
       const base = L.polyline(t.pts, { renderer: svgTrunk, color: t.k === 'dricks' ? '#1e5f9a' : '#7a5020', weight: 7, opacity: 0.55, interactive: false });
-      const flow = L.polyline(t.pts, { renderer: svgTrunk, color: t.k === 'dricks' ? '#7cc4ff' : '#ffce7a', weight: 2.6, opacity: 0.95, dashArray: planned ? '10 12' : '2 16', className: planned ? 'hv-trunk-slow' : 'hv-trunk' });
+      const flow = L.polyline(t.pts, { renderer: svgTrunk, color: t.k === 'dricks' ? '#7cc4ff' : '#ffce7a', weight: 2.6, opacity: 0.95, dashArray: planned ? '10 12' : '2 16' });
       flow.on('click', () => select({ type: 'trunk', ref: t }));
       t._lg = L.layerGroup([base, flow]); t._lg._kind = t.k;
       tr.addLayer(t._lg);
@@ -805,10 +809,11 @@
     layers.leaks = lk;
     layers.shut = L.layerGroup();
     layers.particles = makeParticles();
-    map.on('zoomend', onZoomEnd);
+    map.on('zoomend', onZoomEnd); map.on('moveend', onMoveEnd);
     map.on('mousemove', onMouseMove);
   }
   function onZoomEnd() { streamVis(); styleNet(); syncFacilities(); zoomLabels(); syncSensors(); syncBradd(); }
+  function onMoveEnd() { syncSensors(); }
   // labels and small markers only once there is room for them
   function zoomLabels() {
     const z = map.getZoom();
@@ -1253,7 +1258,7 @@
     S.sim.preset = v; S.sim.running = false; resetSim();
     S.sim.running = true;
     if (S.net === 'dricks' && S.lens !== 'produktion') { S.net = 'dag'; S.color = 'belastning'; }
-    S.layers.sinks = true; S.layers.flow = true; S.layers.bradd = true;
+    S.layers.sinks = true; S.layers.bradd = true;
     syncLayers(); syncSinks(true); renderHud(); styleNet();
   }
   // a widget clicked in the right column → show that part of the operation in the twin
@@ -1261,11 +1266,11 @@
     if (!ctx || !D) return false;
     const f = ctx.filters ? ctx.filters() : {}, need = k => { if (!f[k] && ctx.toggleFilter) ctx.toggleFilter(k); };
     if (id === 'spill') { S.net = 'spill'; S.color = 'belastning'; S.layers.bradd = true; S.layers.fac = true; S.layers.trunks = true; }
-    else if (id === 'dag') { S.net = 'dag'; S.color = 'belastning'; S.layers.sinks = true; S.layers.streams = true; S.layers.flow = true; }
+    else if (id === 'dag') { S.net = 'dag'; S.color = 'belastning'; S.layers.sinks = true; S.layers.streams = true; }
     else if (id === 'dricks') { S.net = 'dricks'; S.color = 'tryck'; S.layers.sens = true; S.cats = ['kvalitet', 'niva', 'tryck']; }
     else if (id === 'flode') { S.net = 'dricks'; S.color = 'typ'; S.layers.sens = true; S.cats = ['flode']; S.layers.leaks = true; }
     else if (id === 'matare') { S.layers.sens = true; S.cats = ['regn']; }
-    else if (id === 'radar' || id === 'prognos') { S.layers.flow = true; S.layers.sens = true; S.cats = ['regn']; need('skyfall'); }
+    else if (id === 'radar' || id === 'prognos') { S.layers.sens = true; S.cats = ['regn']; need('skyfall'); }
     else if (id === 'hav') { S.layers.sea = true; S.layers.sens = true; S.cats = ['hav', 'niva']; redrawTerrain(); }
     else if (id === 'anmal') { need('anmal'); S.layers.sinks = true; }
     else if (id === 'alarm') { need('alarm'); S.layers.sens = true; }
@@ -1287,7 +1292,7 @@
     if (k === 'surge') { S.surge = !S.surge; if (!S.layers.sea) S.layers.sea = true; syncLayers(); redrawTerrain(); renderHud(['layers', 'legend']); renderPanel(true); return; }
     if (k === 'min') { S.ui.min[v] = !S.ui.min[v]; saveUi(); applyUi(); return; }
     if (k === 'resetui') { S.ui = { pos: {}, min: {} }; saveUi(); applyUi(); return; }
-    if (k === 'play') { if (S.sim.t >= SIM_MIN - 1) resetSim(); S.sim.running = !S.sim.running; if (S.sim.running) { S.layers.sinks = true; S.layers.flow = true; S.layers.bradd = true; syncLayers(); } renderHud(['sim', 'layers', 'legend']); return; }
+    if (k === 'play') { if (S.sim.t >= SIM_MIN - 1) resetSim(); S.sim.running = !S.sim.running; if (S.sim.running) { S.layers.sinks = true; S.layers.bradd = true; syncLayers(); } renderHud(['sim', 'layers', 'legend']); return; }
     if (k === 'preset') return startPreset(v);
     if (k === 'reset') { S.sim.running = false; resetSim(); S._m = model(); syncSinks(true); syncFacilities(); syncBradd(); syncSensors(); styleNet(); renderHud(); renderPanel(true); reportSim(); return; }
     if (k === 'scrub') { const r = e.currentTargetRect; if (!r) return; const target = clamp((e.clientX - r.left) / r.width, 0, 1) * SIM_MIN; if (target < S.sim.t) resetSim(); while (S.sim.t < target) { stepSim(1); S.sim.t += 1; } syncSinks(); syncFacilities(); syncBradd(); syncSensors(); styleNet(); renderHud(['sim']); reportSim(); return; }
@@ -1315,17 +1320,25 @@
     S._lt = (S._lt || 0) + 1;
     if (!S.sim.running) {
       // live: refresh loads, instruments and readouts every few seconds
-      if (S._lt % 25 === 0) { S._m = model(); forecast(); styleNet(); syncSensors(); syncBradd(); renderHud(['sim']); renderPanel(); if (S.sel && (S.sel.type === 'sens' || S.sel.type === 'focus')) renderInfo(); }
+      if (S._lt % 42 === 0) {
+        S._m = model(); forecast(); syncSensors(); syncBradd(); renderHud(['sim']); renderPanel();
+        const i = Math.round(intensity() * 2) / 2;
+        if (S.color === 'belastning' && i !== S._li) { S._li = i; styleNet(); }
+        if (S.sel && (S.sel.type === 'sens' || S.sel.type === 'focus')) renderInfo();
+      }
       return;
     }
     stepSim(1); S.sim.t += 1;
     if (S.sim.t >= SIM_MIN - 1) { S.sim.running = false; renderPanel(true); }
-    syncSinks(); syncFacilities(); syncBradd();
-    if (S.sim.t % 3 === 0) { if (S.color === 'belastning') styleNet(); syncSensors(); }
-    renderHud(['sim', 'legend']);
-    if (S.sel && S.sim.t % 4 === 0) renderInfo();
-    renderPanel();
-    if (S.sim.t % 3 === 0 || !S.sim.running) reportSim();
+    // the model steps every tick; the screen follows at a calmer pace
+    const t = S.sim.t, end = !S.sim.running;
+    if (t % 2 === 0 || end) syncSinks();
+    if (t % 3 === 0 || end) { syncBradd(); renderHud(['sim']); }
+    if (t % 4 === 0 || end) syncFacilities();
+    if (t % 6 === 0 || end) { if (S.color === 'belastning') styleNet(); syncSensors(); }
+    if (S.sel && (t % 8 === 0 || end)) renderInfo();
+    if (t % 15 === 0 || end) renderPanel(true);
+    if (t % 8 === 0 || end) reportSim();
   }
 
   // ---------- mount / unmount ----------
@@ -1362,7 +1375,7 @@
     timers.forEach(clearInterval); timers = [];
     window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); drag = null;
     if (map) {
-      map.off('zoomend', onZoomEnd); map.off('mousemove', onMouseMove);
+      map.off('zoomend', onZoomEnd); map.off('moveend', onMoveEnd); map.off('mousemove', onMouseMove);
       if (layers.particles) layers.particles.remove();
       ['terrain', 'net', 'trunks', 'sinks', 'fac', 'dev', 'leaks', 'sens', 'bradd', 'bad', 'shut'].forEach(k => { if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
       if (layers.streams) { const h = layers.streams._hvHost; h.clearLayers(); if (map.hasLayer(h)) map.removeLayer(h); }

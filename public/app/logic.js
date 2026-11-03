@@ -1228,8 +1228,8 @@ class Component extends DCLogic {
       toggleFilter: (k) => this.toggleFilter(k),
       openWidget: (id) => this.openWidgetDetail(id),
       onLens: (l) => this.setState({ visionLens: l }),
-      // simulation state for the widgets; re-render at most once a second
-      onSim: (vs) => { this.visionSim = vs; const now = Date.now(); if (!this._visSimT || now - this._visSimT > 1000 || !vs.active) { this._visSimT = now; this.setState(s => ({ tick: s.tick })); } },
+      // simulation state for the widgets: the dashboard's own 2 s tick re-renders them; only a start/stop renders right away
+      onSim: (vs) => { const was = !!(this.visionSim && this.visionSim.active); this.visionSim = vs; if (was !== !!vs.active) this.setState(s => ({ tick: s.tick })); },
     });
   }
   // the overview's straight kommun-to-kommun lines are replaced by the routed trunks in the vision
