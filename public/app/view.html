@@ -83,7 +83,7 @@
           <div style="font-size:15px;letter-spacing:.3em;color:#7fa8b5;text-transform:uppercase">Kontrollcenter för NSVA · välj vy</div>
         </div>
 
-        <div class="mo-stagger mo-stagger-lg" style="position:relative;display:grid;grid-template-columns:repeat(3, 400px);gap:28px">
+        <div class="mo-stagger mo-stagger-lg" style="position:relative;display:grid;grid-template-columns:repeat(4, 372px);gap:24px">
           <!-- VISKY (steg 1) -->
           <div sc-camel-on-click="{{ openVisky }}" style="cursor:pointer;display:flex;flex-direction:column;gap:18px;padding:30px 30px 26px;border-radius:20px;background:linear-gradient(160deg, rgba(20,52,68,.62), rgba(7,18,26,.5));border:1px solid rgba(var(--acg,53,214,242),.5);box-shadow:0 0 0 1px rgba(var(--acg,53,214,242),.15), 0 18px 50px rgba(0,0,0,.5);transition:transform .18s, box-shadow .18s" style-hover="transform:translateY(-4px);box-shadow:0 0 0 1px var(--ac,#35d6f2), 0 0 40px rgba(var(--acg,53,214,242),.3), 0 24px 60px rgba(0,0,0,.55)">
             <div style="display:flex;align-items:center;justify-content:space-between">
@@ -136,6 +136,28 @@
             </div>
             <div style="font-size:14px;line-height:1.55;color:#9bb9c4">Alla moduler och widgets i en vy. Anpassa layouten via inställningar.</div>
             <div style="margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.16em;color:#8fcfe0;text-transform:uppercase;font-weight:600">Öppna Hydra <span style="font-size:16px">→</span></div>
+          </div>
+
+          <!-- HYDRA – VISIONEN (digital tvilling) -->
+          <div sc-camel-on-click="{{ openVision }}" style="cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:18px;padding:30px 30px 26px;border-radius:20px;background:radial-gradient(120% 90% at 100% 0%, rgba(201,182,255,.18), transparent 55%), linear-gradient(160deg, rgba(20,52,68,.66), rgba(7,18,26,.5));border:1px solid rgba(201,182,255,.45);box-shadow:0 0 0 1px rgba(201,182,255,.08), 0 18px 50px rgba(0,0,0,.35), 0 0 40px rgba(201,182,255,.1)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="width:58px;height:58px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:rgba(201,182,255,.12);border:1px solid rgba(201,182,255,.45)">
+                <svg width="30" height="30" sc-camel-view-box="0 0 24 24" fill="none" stroke="#c9b6ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18l5-7 4 4 5-8 6 11z"></path><path d="M7 11c1.5 2 3 2.5 4 4"></path><circle cx="18" cy="5" r="1.6"></circle></svg>
+              </div>
+              <span style="padding:5px 12px;border-radius:20px;font-size:11px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;color:#1a1030;background:#c9b6ff">Vision</span>
+            </div>
+            <div>
+              <div style="font-size:30px;font-weight:700;letter-spacing:.12em;color:#eaf7fb;line-height:1.05">HYDRA</div>
+              <div style="font-size:15px;color:#d9ccff;margin-top:6px;letter-spacing:.06em">Visionen · digital tvilling</div>
+            </div>
+            <div style="font-size:14px;line-height:1.55;color:#9bb9c4">Verklig terräng, hela ledningsnätet och all produktionsdata – för produktion, distribution och samhällsutveckling.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px">
+              <span style="padding:4px 10px;border-radius:8px;font-size:11px;color:#d9ccff;background:rgba(8,22,30,.6);border:1px solid rgba(201,182,255,.25)">Höjdmodell</span>
+              <span style="padding:4px 10px;border-radius:8px;font-size:11px;color:#d9ccff;background:rgba(8,22,30,.6);border:1px solid rgba(201,182,255,.25)">Rinnvägar</span>
+              <span style="padding:4px 10px;border-radius:8px;font-size:11px;color:#d9ccff;background:rgba(8,22,30,.6);border:1px solid rgba(201,182,255,.25)">Ledningsnät</span>
+              <span style="padding:4px 10px;border-radius:8px;font-size:11px;color:#d9ccff;background:rgba(8,22,30,.6);border:1px solid rgba(201,182,255,.25)">2050</span>
+            </div>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.16em;color:#c9b6ff;text-transform:uppercase;font-weight:600">Öppna visionen <span style="font-size:16px">→</span></div>
           </div>
         </div>
 
@@ -440,6 +462,10 @@
 
       <!-- ===== LEFT COLUMN (dragbara widgets) ===== -->
       <div data-col="left" style="width:372px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;padding-right:3px">
+        <!-- Hydra – visionen: panel owned by app/vision.js -->
+        <sc-if value="{{ isVision }}" hint-placeholder-val="{{ false }}">
+          <div ref="{{ visionPanelRef }}" style="flex:0 0 auto"></div>
+        </sc-if>
 
         <!-- WIDGET: Flödesmätare (ledningsnät + pumpstationer) -->
         <sc-if value="{{ W.flode.inLeft }}" hint-placeholder-val="{{ false }}">
@@ -923,6 +949,11 @@
         <div style="position:absolute;bottom:14px;left:14px;z-index:3;width:26px;height:26px;border-bottom:2px solid rgba(var(--acg,53,214,242),.5);border-left:2px solid rgba(var(--acg,53,214,242),.5);pointer-events:none"></div>
         <div style="position:absolute;bottom:14px;right:14px;z-index:3;width:26px;height:26px;border-bottom:2px solid rgba(var(--acg,53,214,242),.5);border-right:2px solid rgba(var(--acg,53,214,242),.5);pointer-events:none"></div>
 
+        <!-- Hydra – visionen: HUD owned by app/vision.js (hidden while a kommun drill-down is open) -->
+        <sc-if value="{{ isVision }}" hint-placeholder-val="{{ false }}">
+          <div ref="{{ visionHudRef }}" style="position:absolute;inset:0;z-index:6;pointer-events:none;display:{{ visionHudDisplay }}"></div>
+        </sc-if>
+
         <!-- SKYFALLSVARNING — blinks at the top of the map when red (≥10 mm/h) or violet (≥ 2-års-regn) is reached now…+12 h -->
         <sc-if value="{{ skyWarnShow }}" hint-placeholder-val="{{ false }}">
           <!-- one calm panel, centred below the map title: row 1 = NU, row 2 = FRAMÅT, footer = SMHI:s officiella varning.
@@ -977,7 +1008,7 @@
         </sc-if>
 
         <!-- map title + legend (overview only) -->
-        <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ showMapTitle }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute;top:34px;left:52px;z-index:3;pointer-events:none">
             <div style="font-size:12px;letter-spacing:.28em;color:#8fcfe0;text-transform:uppercase;font-weight:600;text-shadow:0 1px 8px rgba(0,0,0,.8)">{{mapTitle}}</div>
             <sc-if value="{{ showStatusOverlay }}" hint-placeholder-val="{{ true }}">
@@ -1223,7 +1254,7 @@
         </sc-if>
 
         <!-- map filters (bottom-left) — not on TV -->
-        <sc-if value="{{ notTv }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ showMapFilters }}" hint-placeholder-val="{{ true }}">
         <div style="position:absolute;bottom:124px;left:16px;z-index:5;width:172px;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:11px 14px;border-radius:12px;background:rgba(6,18,26,.46);backdrop-filter:blur(8px);border:1px solid rgba(74,196,224,.18);box-shadow:0 8px 26px rgba(0,0,0,.28);white-space:nowrap">
           <div style="font-size:9px;letter-spacing:.2em;color:#577684;text-transform:uppercase;margin-bottom:1px">Kartlager</div>
           <sc-for list="{{ mapFilters }}" as="f" hint-placeholder-count="3">

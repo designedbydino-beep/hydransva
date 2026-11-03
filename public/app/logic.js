@@ -26,7 +26,8 @@ class Component extends DCLogic {
     design: (() => { try { return localStorage.getItem('nsva_design') === '2' ? 2 : 1; } catch (e) { return 1; } })(),
     infoTopic: 'oversikt',
     tv: false, // skärmläget är borttaget – TV:n har touch och kör den vanliga versionen
-    view: null, // null = startmeny · 'hydra' | 'visky' | 'prod'
+    view: null, // null = startmeny · 'hydra' | 'visky' | 'prod' | 'vision'
+    visionLens: 'oversikt', // Hydra – visionen: oversikt | produktion | distribution | samhalle
     viewHidden: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_hidden') || '{}'); } catch (e) { return {}; } })(),
     viewLayout: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_layout') || '{}'); } catch (e) { return {}; } })(),
     filters: { skyfall: false, vind: false, alarm: false, anmal: false, regn: false, radartack: false },
@@ -1200,6 +1201,31 @@ class Component extends DCLogic {
     }
     map.on('dragstart', end);
   }
+  // ---- Hydra – visionen: app/vision.js mounts into the left-column panel + map HUD once both exist ----
+  visionRef(kind, el) {
+    this['_vis' + kind] = el;
+    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; return; }
+    this.syncVision();
+  }
+  syncVision() {
+    if (this._visOn || !this._visPanel || !this._visHud) return;
+    if (!this.map || !window.HydraVision) { clearTimeout(this._visT); this._visT = setTimeout(() => this.syncVision(), 150); return; }
+    this._visOn = true;
+    this.visionBase(false);
+    window.HydraVision.mount({
+      map: this.map, panelEl: this._visPanel, hudEl: this._visHud, lens: this.state.visionLens,
+      rainNow: () => this.peakRainAt(0),
+      rainAt: (h) => this.peakRainAt(Math.max(0, Math.min(12, h))),
+      seaCm: () => { try { return this.seaLevel().maxCm; } catch (e) { return 0; } },
+      onLens: (l) => this.setState({ visionLens: l }),
+    });
+  }
+  // the overview's straight kommun-to-kommun lines are replaced by the routed trunks in the vision
+  visionBase(show) {
+    if (!this.map || !this.connLayer) return;
+    if (show && !this.map.hasLayer(this.connLayer)) this.connLayer.addTo(this.map);
+    if (!show && this.map.hasLayer(this.connLayer)) this.map.removeLayer(this.connLayer);
+  }
   // Real municipality borders for the 8 NSVA kommuner — pre-clipped to the coastline (no sea overshoot), embedded via kommuner.js.
   loadBoundaries(L, map) {
     try {
@@ -2260,7 +2286,7 @@ class Component extends DCLogic {
       closeWidget: async () => { this.closeWidgetDetail(); return 'Stängde detaljvyn'; },
       setView: async (p) => {
         const s = String((p && (p.vy || p.view || p.name)) || '').toLowerCase();
-        const v = /skyfall|visky|regn|nederb/.test(s) ? 'visky' : /prod|dricks|flöd|flod/.test(s) ? 'prod' : /meny|start/.test(s) ? null : 'hydra';
+        const v = /vision|tvilling|framtid/.test(s) ? 'vision' : /skyfall|visky|regn|nederb/.test(s) ? 'visky' : /prod|dricks|flöd|flod/.test(s) ? 'prod' : /meny|start/.test(s) ? null : 'hydra';
         if (v === null) { this.setState({ view: null }); return 'Visar startmenyn'; }
         this.setView(v); return 'Visar ' + this.viewDefs()[v].title;
       },
@@ -3233,6 +3259,15 @@ class Component extends DCLogic {
       prod: { title: 'PRODUKTION · DRICKSVATTEN', sub: 'Flödesmätare · ledningsnät och pumpstationer',
         cols: { left: ['flode'], right: ['dricks', 'alarm'] },
         filters: ['alarm'], autoOn: [] },
+      // left column = the vision panel (app/vision.js); right column = today's widgets for the chosen lens
+      vision: { title: 'HYDRA · VISIONEN', sub: 'Digital tvilling · produktion · distribution · samhällsutveckling',
+        cols: { left: [], right: ({
+          oversikt: ['ai', 'alarm', 'flode', 'dricks', 'spill', 'dag', 'prognos', 'radar', 'matare', 'anmal', 'hav'],
+          produktion: ['dricks', 'flode', 'alarm', 'ai'],
+          distribution: ['flode', 'spill', 'dag', 'alarm', 'anmal'],
+          samhalle: ['prognos', 'hav', 'dag', 'anmal', 'radar'],
+        })[this.state.visionLens] || [] },
+        filters: [], autoOn: [] },
     };
   }
   setView(v) {
@@ -3246,7 +3281,7 @@ class Component extends DCLogic {
   // Module views start with their focused default columns, but the user may add any other widget (saved per view)
   viewColsEff(v) {
     const d = this.viewDefs()[v];
-    const o = (this.state.viewLayout || {})[v];
+    const o = v === 'vision' ? null : (this.state.viewLayout || {})[v]; // vision follows the lens, no saved layout
     // a saved layout from before the Regnmätare widget existed → add it at the top of the right column
     if (o && v === 'visky' && !o.left.includes('matare') && !o.right.includes('matare')) return { left: o.left, right: ['matare'].concat(o.right) };
     return o ? o : (d && d.cols ? d.cols : null);
@@ -4500,10 +4535,16 @@ class Component extends DCLogic {
       tvDx: (() => { const a = (this.wind().arrowDeg || 0) * Math.PI / 180; return Math.round(Math.sin(a) * 26); })(),
       tvDy: (() => { const a = (this.wind().arrowDeg || 0) * Math.PI / 180; return Math.round(-Math.cos(a) * 26); })(),
       clockShort: (this.state.clock || '').slice(0, 5) + ' · live',
-      showClickHint: !sel && !this.state.tv,
+      showClickHint: !sel && !this.state.tv && this.state.view !== 'vision',
+      isVision: this.state.view === 'vision',
+      visionPanelRef: this._visPanelRefFn || (this._visPanelRefFn = (el) => this.visionRef('Panel', el)),
+      visionHudRef: this._visHudRefFn || (this._visHudRefFn = (el) => this.visionRef('Hud', el)),
+      visionHudDisplay: sel ? 'none' : 'block',
+      showMapTitle: isOverview && this.state.view !== 'vision',
+      showMapFilters: !this.state.tv && this.state.view !== 'vision',
       viewHasSkyfall: (() => { const d = this.viewDefs()[this.state.view || 'hydra']; return !d.filters || d.filters.includes('skyfall'); })(),
       // per-view map overlays: Visky = nederbörd + havsvattenstånd (no SCADA status); Produktion = no sea gauge
-      showStatusOverlay: !sel && this.state.view !== 'visky',
+      showStatusOverlay: !sel && this.state.view !== 'visky' && this.state.view !== 'vision',
       showSeaGauge: !sel && ['hydra', 'visky'].includes(this.state.view || 'hydra'),
       viewTitle: this.viewDefs()[this.state.view || 'hydra'].title,
       viewSub: this.viewDefs()[this.state.view || 'hydra'].sub,
@@ -4512,6 +4553,7 @@ class Component extends DCLogic {
       openHydra: () => this.leave('menu', () => this.setView('hydra')),
       openVisky: () => this.leave('menu', () => this.setView('visky')),
       openProd: () => this.leave('menu', () => this.setView('prod')),
+      openVision: () => this.leave('menu', () => this.setView('vision')),
       // 'mo-out' while an overlay plays its exit animation
       mo: { wdet: L.wdet ? 'mo-out' : '', gd: L.gd ? 'mo-out' : '', rd: L.rd ? 'mo-out' : '', evd: L.evd ? 'mo-out' : '', settings: L.settings ? 'mo-out' : '', menu: L.menu ? 'mo-out' : '' },
       widgetMenu: this.widgetMenu(),
@@ -4549,7 +4591,7 @@ class Component extends DCLogic {
       filters: this.state.filters,
       skyfallScanning: this.state.skyfallScan,
       skyfallNoResult: this.state.skyfallResult === 'none',
-      skyfallScrubber: true, // always visible at the bottom of the map
+      skyfallScrubber: this.state.view !== 'vision', // always visible at the bottom of the map (the vision has its own simulation bar)
       sv: this.skyfallScrubVals(),
       toggleSkyMode: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState(s => ({ skyfallMode: s.skyfallMode === 'int' ? 'rp' : 'int' })); },
       skyIntBoxBg: this.state.skyfallMode === 'int' ? '#ff9a2e' : 'rgba(8,22,30,.6)',
