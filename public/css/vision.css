@@ -159,6 +159,9 @@
 .hv-plume{animation:hvPlume 2.4s ease-in-out infinite}
 @keyframes hvPlume{0%,100%{opacity:.85}50%{opacity:1}}
 .hv-water{image-rendering:auto}
+.hv-pulse{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:#d8f0ff;box-shadow:0 0 6px 2px rgba(124,196,255,.9);pointer-events:none}
+.hv-pulse.sp{background:#ffe8c4;box-shadow:0 0 6px 2px rgba(255,180,90,.85)}
+.hv-pulse.pl{width:6px;height:6px;left:-3px;top:-3px;opacity:.8}
 .hv-check{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:2px 9px;padding:7px 2px;border-top:1px solid rgba(74,196,224,.08)}
 .hv-check b{font-size:12px;color:#eaf7fb;font-weight:600}
 .hv-check em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9bb9c4;text-align:right}

@@ -718,6 +718,56 @@
     return { remove() { cancelAnimationFrame(raf); map.off('move zoom viewreset', onMove); map.off('resize', size); map.off('zoomanim', clear); cv.remove(); } };
   }
 
+  // överföringsledningar: glowing pulses travel along each trunk in its flow direction. Only their transform
+  // changes per frame (positions are layer points, so panning is free); the lines themselves are never redrawn.
+  const trunkShown = t => S.layers.trunks && (t.k === 'dricks' ? S.net !== 'spill' : (S.net === 'spill' || S.lens === 'samhalle' || S.lens === 'oversikt'));
+  function makeTrunkFlow() {
+    const wrap = document.createElement('div');
+    map.getPane(pane('hvTrunkFlow', 445)).appendChild(wrap);
+    const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let dots = [], last = performance.now(), fr = 0;
+    const posAt = (l, d) => {
+      let lo = 0, hi = l.cum.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (l.cum[m] <= d) lo = m; else hi = m; }
+      const a = l.pts[lo], b = l.pts[hi], f = (d - l.cum[lo]) / ((l.cum[hi] - l.cum[lo]) || 1);
+      return [a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f];
+    };
+    const place = dt => dots.forEach(o => {
+      if (dt) { o.d += o.v * dt; if (o.d > o.l.len) o.d -= o.l.len; }
+      const p = posAt(o.l, o.d); o.el.style.transform = 'translate(' + p[0].toFixed(1) + 'px,' + p[1].toFixed(1) + 'px)';
+    });
+    function rebuild() {
+      wrap.textContent = ''; dots = [];
+      const lines = D.trunks.filter(trunkShown).map(t => {
+        const pts = t.pts.map(q => map.latLngToLayerPoint(q)), cum = [0];
+        for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]));
+        return { t, pts, cum, len: cum[cum.length - 1] };
+      });
+      const total = lines.reduce((a, l) => a + l.len, 0), gap = Math.max(70, total / 160);
+      lines.forEach(l => {
+        const planned = l.t.st === 'planerad', n = Math.max(1, Math.floor(l.len / gap));
+        for (let k = 0; k < n; k++) {
+          const el = document.createElement('div');
+          el.className = 'hv-pulse' + (l.t.k === 'spill' ? ' sp' : '') + (planned ? ' pl' : '');
+          wrap.appendChild(el);
+          dots.push({ l, el, d: (k + hash(l.t.name + k) * 0.6) * (l.len / n), v: planned ? 0.022 : 0.04 }); // px per ms
+        }
+      });
+      place(0); wrap.style.display = '';
+    }
+    function frame(t) {
+      raf2 = requestAnimationFrame(frame);
+      const dt = Math.min(64, t - last); last = t;
+      if (still || !dots.length || (fr++ & 1)) return; // 30 fps, like the rain particles
+      place(dt * 2);
+    }
+    const hide = () => { wrap.style.display = 'none'; };
+    map.on('zoomstart zoom', hide); map.on('zoomend viewreset', rebuild);
+    rebuild();
+    let raf2 = requestAnimationFrame(frame);
+    return { rebuild, remove() { cancelAnimationFrame(raf2); map.off('zoomstart zoom', hide); map.off('zoomend viewreset', rebuild); wrap.remove(); } };
+  }
+
   function buildLayers() {
     const cvNet = L.canvas({ pane: pane('hvNet', 410), padding: 0.15, tolerance: 5 });
     const cvStream = L.canvas({ pane: pane('hvStream', 395), padding: 0.15, tolerance: 3 });
@@ -809,6 +859,7 @@
     layers.leaks = lk;
     layers.shut = L.layerGroup();
     layers.particles = makeParticles();
+    layers.trunkFlow = makeTrunkFlow();
     map.on('zoomend', onZoomEnd); map.on('moveend', onMoveEnd);
     map.on('mousemove', onMouseMove);
   }
@@ -836,8 +887,9 @@
     streamVis();
     // trunks: drinking-water trunks with the dricksvatten net, planned spill trunks with spill / samhällsutveckling
     const tl = layers.trunks;
-    if (S.layers.trunks) { if (!map.hasLayer(tl)) tl.addTo(map); tl.eachLayer(g => { const show = g._kind === 'dricks' ? S.net !== 'spill' : (S.net === 'spill' || S.lens === 'samhalle' || S.lens === 'oversikt'); g.eachLayer(l => { const p = l._path; if (p) p.style.display = show ? '' : 'none'; }); }); }
+    if (S.layers.trunks) { if (!map.hasLayer(tl)) tl.addTo(map); D.trunks.forEach(t => { const show = trunkShown(t); t._lg.eachLayer(l => { const p = l._path; if (p) p.style.display = show ? '' : 'none'; }); }); }
     else if (map.hasLayer(tl)) map.removeLayer(tl);
+    if (layers.trunkFlow) layers.trunkFlow.rebuild();
     syncFacilities(); styleNet(); zoomLabels(); syncSensors(); syncBradd();
   }
 
@@ -1377,6 +1429,7 @@
     if (map) {
       map.off('zoomend', onZoomEnd); map.off('moveend', onMoveEnd); map.off('mousemove', onMouseMove);
       if (layers.particles) layers.particles.remove();
+      if (layers.trunkFlow) layers.trunkFlow.remove();
       ['terrain', 'net', 'trunks', 'sinks', 'fac', 'dev', 'leaks', 'sens', 'bradd', 'bad', 'shut'].forEach(k => { if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
       if (layers.streams) { const h = layers.streams._hvHost; h.clearLayers(); if (map.hasLayer(h)) map.removeLayer(h); }
       (layers.renderers || []).forEach(r => { if (map.hasLayer(r)) map.removeLayer(r); });
