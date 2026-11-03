@@ -811,7 +811,7 @@
       drawSink(s);
       s._ov = L.imageOverlay(s._cv.toDataURL(), b, { pane: 'hvWater', className: 'hv-water', interactive: false });
       s._mk = L.marker([s.lat, s.lng], { pane: 'hvFac', icon: L.divIcon({ className: '', iconSize: [0, 0], html: '<div class="hv-fac" style="width:12px;height:12px;border-radius:50%;background:rgba(201,182,255,.25);border:1.5px solid #c9b6ff"></div>' }) });
-      s._mk.on('click', () => select({ type: 'sink', ref: s }));
+      s._mk.on('click', () => openDetail('sink', s));
       s._mk.bindTooltip(s.name + ' · ' + nf(s.vol) + ' m³', { className: 'nsva-tip', direction: 'top', offset: [0, -8] });
       sk.addLayer(s._ov); sk.addLayer(s._mk);
     });
@@ -822,7 +822,7 @@
       f._lvl = 55 + hash(f.id) * 35;
       f._mk = L.marker([f.lat, f.lng], { pane: 'hvFac', icon: L.divIcon({ className: '', iconSize: [0, 0], html: facIcon(f) }) });
       f._mk.bindTooltip('<b>' + esc(f.name) + '</b><br>' + facLabel(f) + (f.planned ? ' · planerad ' + f.planned : '') + (f.src === 'OSM' ? ' · position från OpenStreetMap' : ''), { className: 'nsva-tip', direction: 'top', offset: [0, -12] });
-      f._mk.on('click', () => select({ type: 'fac', ref: f }));
+      f._mk.on('click', () => openDetail('fac', f));
     });
     layers.fac = fl;
     // bräddpunkter + plymer, badplatser
@@ -830,7 +830,7 @@
     D.bps.forEach(b => {
       b._mk = L.marker([b.lat, b.lng], { pane: 'hvFac', icon: L.divIcon({ className: '', iconSize: [0, 0], html: bpIcon(b) }) });
       b._mk.bindTooltip('<b>' + esc(b.name) + '</b><br>Recipient: ' + b.recipient, { className: 'nsva-tip', direction: 'top', offset: [0, -12] });
-      b._mk.on('click', () => select({ type: 'bp', ref: b }));
+      b._mk.on('click', () => openDetail('bp', b));
       b._pl = L.circle([b.lat, b.lng], { radius: 60, pane: 'hvWater', stroke: false, fillColor: '#c8823a', fillOpacity: 0.25, interactive: false, className: 'hv-plume' });
     });
     layers.bradd = bl;
@@ -842,7 +842,7 @@
     D.sens.forEach(sn => {
       sn._mk = L.marker([sn.lat, sn.lng], { pane: 'hvSens', icon: L.divIcon({ className: '', iconSize: [0, 0], html: sensIcon(sn, 'ok') }) });
       sn._mk.bindTooltip(() => '<b>' + esc(sn.name) + '</b><br>' + (sn._v ? sn._v.txt : ''), { className: 'nsva-tip', direction: 'top', offset: [0, -10] });
-      sn._mk.on('click', () => select({ type: 'sens', ref: sn }));
+      sn._mk.on('click', () => openDetail('sens', sn));
     });
     layers.sens = sl;
     // exploateringsområden
@@ -859,7 +859,7 @@
     D.dmas.filter(d => d.leak).forEach(d => {
       d._mk = L.marker(d.worst.mid, { pane: 'hvFac', icon: L.divIcon({ className: '', iconSize: [0, 0], html: '<div class="hv-leak"></div>' }) });
       d._mk.bindTooltip('<b>Misstänkt läcka</b><br>' + esc(d.name) + ' · ' + nf(d.leakLs, 1) + ' l/s<br>' + d.ao.id + ' · ' + d.ao.status, { className: 'nsva-tip', direction: 'top', offset: [0, -10] });
-      d._mk.on('click', () => select({ type: 'dma', ref: d }));
+      d._mk.on('click', () => openDetail('dma', d));
       lk.addLayer(d._mk);
     });
     layers.leaks = lk;
@@ -1367,6 +1367,160 @@
       rows + '<div class="hv-foot" style="padding:10px 0 0">OSM = verklig position från OpenStreetMap. Övriga anläggningar är placerade efter terrängen och ledningsnätet.</div></div>';
   }
 
+  // ---- detail view (logic.js wdet): samlad → kommun → one facility/meter, all from the twin's data ----
+  const stc = st => st === 'bad' ? COL.bad : st === 'warn' ? COL.warn : COL.ok;
+  function widgetFor(kind, ref) {
+    if (kind === 'fac') return ({ arv: 'spill', pump: 'spill', magasin: 'spill' })[ref.type] || 'dricks';
+    if (kind === 'bp') return 'spill';
+    if (kind === 'dma') return 'flode';
+    if (kind === 'sink') return 'dag';
+    const c = ref.cat, k = ref.kind;
+    if (c === 'flode' || c === 'lacka') return 'flode';
+    if (c === 'niva') return k === 'res' ? 'dricks' : k === 'aa' ? 'dag' : 'spill';
+    if (c === 'kvalitet') return k === 'arv' ? 'spill' : 'dricks';
+    if (c === 'energi') return k === 'vv' ? 'dricks' : 'spill';
+    if (c === 'hav') return 'hav';
+    return 'dricks';
+  }
+  function openDetail(kind, ref) {
+    if (!ctx || !ref) return;
+    if (kind === 'sens' && ref.cat === 'regn' && ref.g && ref.g.raw && ctx.openGauge) return ctx.openGauge(ref.g.raw);
+    if (kind === 'sens' && ref.cat === 'hav') return ctx.openWidget && ctx.openWidget('hav');
+    if (ctx.openDetail) ctx.openDetail(widgetFor(kind, ref), ref.town, kind + ':' + ref.id);
+  }
+  const K = (label, val, unit, color) => ({ label, val: String(val), unit: unit || '', color: color || '#cfeaf2' });
+  const item = (name, sub, val, color, key) => ({ name, sub, val, color, key });
+  const sensItems = list => list.map(sn => { const v = sensVal(sn); return item(sn.name.split(' · ')[0], SENS[sn.cat].label + 'mätare', v.txt, stc(v.st), 'sens:' + sn.id); });
+  // a small pump without its own meter: its share of the town's spillvatten load
+  const pumpFlow = f => { const t = (S._m || model()).towns.find(x => x.id === f.town), q = S.sim.q && S.sim.q[f.town], ld = q ? q.load : t.arvIn / t.pumpCap; return { flow: (f.cap || 100) * ld * (0.8 + hash(f.id) * 0.4), ld: ld * (0.85 + hash(f.id) * 0.3) }; };
+  const facItem = f => {
+    const fl = D.sens.find(sn => sn.ref === f && (sn.cat === 'flode' || sn.kind === 'res' || sn.kind === 'ps')), v = fl ? sensVal(fl) : null;
+    if (!v && f.type === 'pump') { const p = pumpFlow(f); return item(f.name, facLabel(f) + (f.planned ? ' · planerad ' + f.planned : '') + (f.src === 'OSM' ? ' · OSM' : ''), f.planned ? 'planerad' : nf(p.flow) + ' m³/h', f.planned ? '#7fa8b5' : p.ld > 1 ? COL.bad : p.ld > 0.85 ? COL.warn : COL.ok, 'fac:' + f.id); }
+    return item(f.name, facLabel(f) + (f.src === 'OSM' ? ' · OSM' : ''), v ? v.txt : (f.cap ? nf(f.cap) + ' m³/h' : '–'), v ? stc(v.st) : '#7fa8b5', 'fac:' + f.id);
+  };
+  const bpItem = b => item(b.name, b.recipient + ' · ' + b.yearN + ' ggr i år', b.now > 0 ? nf(b.now) + ' m³/h' : nf(b.yearM3) + ' m³', b.now > 0 ? COL.bad : b._risk || b.yearN > 6 ? COL.warn : COL.ok, 'bp:' + b.id);
+  function townList(mid, wid) {
+    if (!D || !mid) return null;
+    const facs = D.fac.filter(f => f.town === mid), t = D.tById[mid];
+    let items = [];
+    if (wid === 'dricks') items = facs.filter(f => ['vattenverk', 'brunn', 'reservoar', 'booster'].includes(f.type)).map(facItem);
+    else if (wid === 'spill') items = facs.filter(f => ['arv', 'pump', 'magasin'].includes(f.type)).map(facItem).concat(D.bps.filter(b => b.town === mid).map(bpItem));
+    else if (wid === 'dag') items = D.sinks.filter(x => x.town === mid).map(x => item(x.name, 'Instängd lågpunkt · ' + nf(x.area / 1e4, 1) + ' ha', Math.round(x.V / x.vol * 100) + ' % fyllt', x.V >= x.vol ? COL.bad : x.V > 0 ? COL.warn : COL.ok, 'sink:' + x.id));
+    if (!items.length) return null;
+    return { title: 'Anläggningar i tvillingen · ' + t.name + ' · tryck för detaljer', kind: 'list', items };
+  }
+  function detail(key) {
+    if (!D || !key) return null;
+    const i = key.indexOf(':'), kind = key.slice(0, i), id = key.slice(i + 1);
+    const m = S._m || model(), q = S.sim.q;
+    const facSens = ref => D.sens.filter(sn => sn.ref === ref);
+    const listSec = (title, items) => items.length ? { title, kind: 'list', items } : null;
+    const statSec = (title, items) => ({ title, kind: 'stats', items });
+    const out = (o) => Object.assign({ sections: [] }, o, { sections: (o.sections || []).filter(Boolean) });
+    if (kind === 'fac') {
+      const f = D.fac.find(x => x.id === id); if (!f) return null;
+      const t = m.towns.find(x => x.id === f.town), tq = q && q[f.town], sens = facSens(f), main = sens.find(sn => sn.cat === 'flode' || sn.kind === 'res' || sn.kind === 'ps');
+      const mv = main ? sensVal(main) : null, hist = main ? sensHist(main, mv.v) : Array.from({ length: 24 }, (_, h) => 50 + Math.sin(h / 3 + hash(f.id) * 9) * 10);
+      const pos = statSec('Anläggning', [K('Position', f.src === 'OSM' ? 'OSM' : 'fiktiv', '', f.src === 'OSM' ? COL.ok : '#7fa8b5'), K('Markhöjd', nf(f.elev, 1), 'm ö.h.'), K('Kommun', D.tById[f.town].name)]);
+      const near = D.bps.filter(b => b.town === f.town && kmDist(b, f) < 2.5);
+      if (f.type === 'vattenverk' || f.type === 'brunn') {
+        const q2 = D.sens.find(sn => sn.ref === f && sn.cat === 'kvalitet'), qv = q2 ? sensVal(q2) : null, prod = mv ? mv.v : t.demand;
+        return out({ kind: facLabel(f), name: f.name, histLabel: 'Utgående flöde · senaste 24 h (m³/h)', hist, histColor: COL.dricks,
+          kpis: [K('Produktion nu', nf(prod), 'm³/h', 'var(--ac,#35d6f2)'), K('Kapacitet', nf(f.small || f.type === 'brunn' ? (f.cap || 60) : t.cap), 'm³/h'), K('Nyttjandegrad', Math.round(prod / t.cap * 100), '%', prod / t.cap > 0.85 ? COL.warn : COL.ok), K('Turbiditet', qv ? nf(qv.v, 2) : '0,15', 'NTU', qv ? stc(qv.st) : COL.ok), K('PFAS4', nf(0.5 + hash(f.town + '-vv') * 2.2, 1), 'ng/l', COL.ok), K('Energi', nf(0.32 + hash(f.id + 'e') * 0.2, 2), 'kWh/m³')],
+          levels: reservoirLevels(f.town).map(r => ({ name: r.name, pct: Math.round(r.v), pctTxt: Math.round(r.v) + '%', color: r.v < 30 ? COL.bad : r.v < 45 ? COL.warn : COL.ok })), levelsTitle: 'Vattentorn & reservoarer i kommunen',
+          sections: [listSec('Mätpunkter vid anläggningen', sensItems(sens)), pos, statSec('Produktion ' + S.year, [K('Behov', nf(t.demand), 'm³/h'), K('Största dygnet', nf(t.demand * 1.25), 'm³/h'), K('N-1 regionen', m.n1 ? 'OK' : 'BRIST', '', m.n1 ? COL.ok : COL.bad), K('Invånare', nf(t.pop / 1000, 1), 'tusen')])] });
+      }
+      if (f.type === 'reservoar' || f.type === 'booster') {
+        const zone = D.streets.filter(s => s.zone === f.id), pr = zone.map(s => s.pressure / 10), lv = mv ? mv.v : f._lvl;
+        const dmz = [...new Set(zone.map(s => s.dmaId))].map(d => D.dmas.find(x => x.id === d)).filter(Boolean);
+        return out({ kind: facLabel(f), name: f.name, histLabel: f.type === 'booster' ? 'Tryck ut · senaste 24 h' : 'Nivå · senaste 24 h (%)', hist, histColor: '#35d6f2',
+          kpis: f.type === 'booster' ? [K('Tryckhöjning', '+' + nf(f.lift / 10, 1), 'bar', 'var(--ac,#35d6f2)'), K('Ledningar', zone.length, 'st'), K('Tryck min', pr.length ? nf(Math.min(...pr), 1) : '–', 'bar'), K('Tryck max', pr.length ? nf(Math.max(...pr), 1) : '–', 'bar'), K('Energi', nf(6 + hash(f.id) * 14), 'kW'), K('Status', 'I drift', '', COL.ok)]
+            : [K('Nivå nu', Math.round(lv), '%', lv < 30 ? COL.bad : lv < 45 ? COL.warn : COL.ok), K('Vattenyta', nf(f.head, 1), 'm ö.h.'), K('Reservtid', nf(6 + hash(f.id) * 10, 0), 'h'), K('Försörjer', zone.length, 'ledningar'), K('Tryck i zonen', pr.length ? nf(Math.min(...pr), 1) + '–' + nf(Math.max(...pr), 1) : '–', 'bar'), K('Typ', f.tower ? 'Vattentorn' : 'Reservoar')],
+          sections: [dmz.length ? { title: 'Tryckzonens mätområden (lägsta tryck)', kind: 'zones', items: dmz.map(d => ({ label: d.name, val: nf(d.low.pressure / 10, 1) + ' bar', color: d.low.pressure < 25 ? COL.warn : COL.ok })) } : null, listSec('Mätpunkter vid anläggningen', sensItems(sens)), pos] });
+      }
+      // avlopp: arv, pumpstationer, magasin
+      const pf = f.type === 'pump' && !mv ? pumpFlow(f) : null;
+      const ld = f.type === 'arv' ? (tq ? tq.arv : t.arvLoad) : pf ? pf.ld : (tq ? tq.load : t.arvIn / t.pumpCap);
+      const flow = mv ? mv.v : pf ? pf.flow : (f.type === 'arv' ? (f.small ? f.cap * 0.6 : t.arvIn) : t.arvIn * 0.55), pq = D.sens.find(sn => sn.ref === f && sn.cat === 'kvalitet');
+      return out({ kind: facLabel(f), name: f.name, histLabel: f.type === 'arv' ? 'Inflöde (lila) vs utflöde (grön) · senaste 24 h' : 'Flöde · senaste 24 h (m³/h)', hist, histColor: '#9b8cff', hist2: f.type === 'arv' ? hist.map(v => v * 0.94) : null,
+        kpis: [K(f.type === 'arv' ? 'Inflöde' : 'Flöde', nf(flow), 'm³/h', '#9b8cff'), K('Kapacitet', nf(f.type === 'arv' ? (f.small ? f.cap : t.arvCap) : (f.cap || t.pumpCap * 0.55)), 'm³/h'), K('Belastning', Math.round(ld * 100), '%', ld > 1 ? COL.bad : ld > 0.85 ? COL.warn : COL.ok),
+          f.type === 'arv' ? K('P-tot ut', pq ? nf(sensVal(pq).v, 2) : '0,18', 'mg/l', pq ? stc(sensVal(pq).st) : COL.ok) : K('Sumpnivå', Math.round(clamp(tq ? tq.load * 78 : 42 + ctx.stormF(f.town) * 40, 4, 100)), '%'),
+          K('Bräddning', near.some(b => b.now > 0) || (f.type === 'arv' && tq && tq.bypass > 0) ? 'AKTIV' : near.some(b => b._risk) ? 'RISK' : 'NEJ', '', near.some(b => b.now > 0) ? COL.bad : near.some(b => b._risk) ? COL.warn : COL.ok), K('Energi', nf(flow * (f.type === 'arv' ? 0.55 : 0.06)), 'kW')],
+        levels: f.type === 'arv' ? D.fac.filter(x => x.town === f.town && x.type === 'pump' && !x.planned).map(x => { const l = Math.round(clamp((tq ? tq.load : t.arvIn / t.pumpCap) * 100 * (0.85 + hash(x.id) * 0.3), 0, 100)); return { name: x.name, pct: l, pctTxt: l + '%', color: l > 90 ? COL.bad : l > 75 ? COL.warn : COL.ok }; }) : [], levelsTitle: 'Pumpstationer som leder hit',
+        sections: [listSec('Bräddpunkter i närheten', near.map(bpItem)), listSec('Mätpunkter vid anläggningen', sensItems(sens)), pos] });
+    }
+    if (kind === 'bp') {
+      const b = D.bps.find(x => x.id === id); if (!b) return null;
+      const t = m.towns.find(x => x.id === b.town), bs = D.sens.find(sn => sn.ref === b), bv = bs ? sensVal(bs) : null, fc = forecast().find(x => x.town === b.town);
+      const badNear = D.bad.filter(x => kmDist(x, b) < 3.5);
+      return out({ kind: b.atArv ? 'Nödavlastning' : 'Bräddpunkt', name: b.name, histLabel: 'Kammarnivå · senaste 24 h', hist: bs ? sensHist(bs, bv.v + 100).map(v => Math.max(1, v)) : [], histColor: '#ff8a4a',
+        kpis: [K('Status', b.now > 0 ? 'BRÄDDAR' : fc && !b.atArv ? 'RISK ' + whenH(fc.h) : 'NORMAL', '', b.now > 0 ? COL.bad : fc && !b.atArv ? COL.warn : COL.ok), K('Kammarnivå', bv ? bv.txt : '–', 'till krön', bv ? stc(bv.st) : '#cfeaf2'), K('Detta tillfälle', nf(b.vol), 'm³'), K('Tillfällen i år', b.yearN, 'st'), K('Volym i år', nf(b.yearM3), 'm³'), K('Andel av årsflödet', nf(b.yearM3 / (t.arvBase * 8760) * 100, 2), '%')],
+        sections: [statSec('Recipient & krav', [K('Recipient', b.recipient), K('Bräddkrön', b.krona, 'cm'), K('EU-mål', '< ' + EU_OVERFLOW, '%'), K('Rapporteras', 'Tillsyn')]),
+          badNear.length ? { title: 'Badplatser i närheten', kind: 'zones', items: badNear.map(x => ({ label: x.name, val: x.warn ? 'Avrådan 48 h' : 'Bra badvatten', color: x.warn ? COL.bad : COL.ok })) } : null,
+          statSec('Åtgärd', [K(b.now > 0 ? 'Nu' : fc ? 'Prognos' : 'Plan', b.now > 0 ? 'Maxa pumpning' : fc ? 'Förtöm nu' : b.yearN > 6 ? 'Magasin ' + nf(Math.round(b.yearM3 / b.yearN / 100) * 100) + ' m³' : 'Övervaka', '', b.now > 0 ? COL.bad : fc || b.yearN > 6 ? COL.warn : COL.ok)])] });
+    }
+    if (kind === 'sens') {
+      const sn = D.sens.find(x => x.id === id); if (!sn) return null;
+      const v = sensVal(sn), c = SENS[sn.cat], ref = sn.ref && sn.ref.type ? sn.ref : null;
+      return out({ kind: c.label + 'mätare', name: sn.name, histLabel: 'Mätvärde · senaste 24 h', hist: sensHist(sn, v.v).map(x => Math.abs(x)), histColor: c.col,
+        kpis: [K('Värde nu', v.txt, '', stc(v.st)), K('Status', v.st === 'bad' ? 'LARM' : v.st === 'warn' ? 'VARNING' : 'NORMAL', '', stc(v.st)), K('Gräns', v.lim || '–'), K('Kommunikation', ['NB-IoT', 'LoRaWAN', '4G', 'Fiber'][Math.floor(hash(sn.id) * 4)]), K('Senast', (1 + Math.floor(hash(sn.id + 't') * 50)) + ' s', 'sedan'), K('Batteri', Math.round(60 + hash(sn.id + 'b') * 40), '%')],
+        sections: [ref ? listSec('Kopplad till', [facItem(ref)]) : sn.kind === 'bp' ? listSec('Kopplad till', [bpItem(sn.ref)]) : sn.kind === 'dma' || sn.kind === 'leak' ? listSec('Kopplad till', [item('DMA ' + sn.ref.name, 'Mätområde', nf(sn.ref.mnf + sn.ref.leakLs, 1) + ' l/s', sn.ref.leak ? COL.warn : COL.ok, 'dma:' + sn.ref.id)]) : null,
+          v.extra ? statSec('Mer', [K('', v.extra)]) : null] });
+    }
+    if (kind === 'dma') {
+      const d = D.dmas.find(x => x.id === id); if (!d) return null;
+      const ms = D.sens.find(sn => sn.ref === d && sn.kind === 'dma'), mv = ms ? sensVal(ms) : null;
+      return out({ kind: 'Mätområde (DMA)', name: d.name, histLabel: 'Inflöde till mätområdet · senaste 24 h (l/s)', hist: ms ? sensHist(ms, mv.v) : [], histColor: '#35d6f2',
+        kpis: [K('Minsta nattflöde', nf(d.mnf + d.leakLs, 1), 'l/s', d.leak ? COL.warn : COL.ok), K('Förväntat', nf(d.mnf, 1), 'l/s'), K('Avvikelse', d.leak ? '+' + nf(d.leakLs, 1) : '0', 'l/s', d.leak ? COL.bad : COL.ok), K('Förlust', nf(d.leakLs * 86.4), 'm³/dygn', d.leak ? COL.bad : '#cfeaf2'), K('Ledningar', nf(d.len / 1000, 1), 'km'), K('Smarta mätare', nf(d.meters), 'st')],
+        sections: [d.ao ? statSec('Arbetsorder', [K('Order', d.ao.id), K('Status', d.ao.status.split(' – ')[0]), K('Lag', d.ao.crew)]) : null,
+          listSec('Mätpunkter i mätområdet', sensItems(D.sens.filter(sn => sn.ref === d || sn.ref === d.low || sn.ref === d.far)))] });
+    }
+    if (kind === 'sink') {
+      const x = D.sinks.find(y => y.id === id); if (!x) return null;
+      const depth = x.hh == null ? 0 : x.maxD - x.hh;
+      return out({ kind: 'Instängd lågpunkt', name: x.name, histLabel: 'Nederbörd · kommande 12 h (mm/h)', hist: Array.from({ length: 12 }, (_, h) => ctx.rainAt(h) || 0), histColor: '#4aacff',
+        kpis: [K('Fyllnad', Math.round(x.V / x.vol * 100), '%', x.V >= x.vol ? COL.bad : x.V > 0 ? COL.warn : COL.ok), K('Vattendjup', nf(depth, 2), 'm'), K('Volym när fullt', nf(x.vol), 'm³'), K('Största djup', nf(x.maxD, 1), 'm'), K('Yta', nf(x.area / 1e4, 1), 'ha'), K('Tillrinning', nf(x.catch / 1e6, 2), 'km²')],
+        sections: [statSec('Åtgärd', [K('Förslag', 'Skyfallsyta', '', COL.vio), K('Höjdsättning', 'Led bort från hus')])] });
+    }
+    return null;
+  }
+  // kommun level of the detail view: the same figures as the twin's facilities
+  function townKpis(mid, wid) {
+    if (!D || !mid || !D.tById[mid]) return null;
+    const m = S._m || model(), t = m.towns.find(x => x.id === mid), q = S.sim.q && S.sim.q[mid];
+    const val = (cat, kind) => { const sn = D.sens.find(x => x.town === mid && x.cat === cat && x.kind === kind); return sn ? sensVal(sn) : null; };
+    if (wid === 'dricks') {
+      const fl = val('flode', 'vv'), kv = val('kvalitet', 'vv'), pr = D.streets.filter(s => s.town === mid).map(s => s.pressure / 10).sort((a, b) => a - b);
+      const prod = fl ? fl.v : t.demand;
+      return [K('Produktion', nf(prod), 'm³/h', 'var(--ac,#35d6f2)'), K('Dygnsproduktion', nf(prod * 24), 'm³'), K('Tryck (median)', pr.length ? nf(pr[pr.length >> 1], 1) : '–', 'bar'), K('Turbiditet', kv ? nf(kv.v, 2) : '–', 'NTU', kv ? stc(kv.st) : COL.ok), K('Nyttjandegrad', Math.round(prod / t.cap * 100), '%'), K('Läckor', D.dmas.filter(d => d.town === mid && d.leak).length, 'st', D.dmas.some(d => d.town === mid && d.leak) ? COL.warn : COL.ok)];
+    }
+    if (wid === 'spill') {
+      const inf = q ? Math.min(q.q, q.pumpCap) : t.arvIn, over = D.bps.some(b => b.town === mid && b.now > 0), risk = D.bps.some(b => b.town === mid && b._risk);
+      const sump = clamp(q ? q.load * 78 : 42 + ctx.stormF(mid) * 40, 4, 100), ld = q ? q.arv : t.arvLoad;
+      return [K('Inflöde ARV', nf(inf), 'm³/h', '#9b8cff'), K('Utflöde', nf(inf * 0.94), 'm³/h', '#2fe6c4'), K('Sumpnivå', Math.round(sump), '%', sump > 90 ? COL.bad : sump > 75 ? COL.warn : COL.ok), K('Belastning ARV', Math.round(ld * 100), '%', ld > 1 ? COL.bad : ld > 0.85 ? COL.warn : COL.ok), K('Bräddning', over ? 'AKTIV' : risk ? 'RISK' : 'NEJ', '', over ? COL.bad : risk ? COL.warn : COL.ok), K('Dygnsvolym', nf(inf * 24), 'm³')];
+    }
+    if (wid === 'dag') {
+      const sk = D.sinks.filter(x => x.town === mid), vol = sk.reduce((a, x) => a + x.vol, 0), fill = vol ? sk.reduce((a, x) => a + x.V, 0) / vol * 100 : 0, i = intensity();
+      return [K('Regn nu', nf(i, 1), 'mm/h', i > 10 ? COL.warn : '#4aacff'), K('Lågpunkter', sk.length, 'st'), K('Fyllnad', Math.round(fill), '%', fill > 80 ? COL.bad : fill > 0 ? COL.warn : COL.ok), K('Volym', nf(vol), 'm³'), K('Dagv. fullt', Math.round(D.streets.filter(s => s.town === mid && loadOf(s, 'dag') >= 1).length / Math.max(1, D.streets.filter(s => s.town === mid).length) * 100), '%'), K('Klimatfaktor', '×' + nf(SCEN[S.year].clim, 1))];
+    }
+    return null;
+  }
+  // widget content that must match the twin while in the vision
+  function flowMeters() {
+    if (!D || !S) return null;
+    return D.sens.filter(sn => sn.cat === 'flode').map(sn => {
+      const v = sensVal(sn), r = sn.ref, t = (S._m || model()).towns.find(x => x.id === sn.town);
+      const flow = sn.kind === 'dma' ? v.v * 3.6 : v.v, normal = sn.kind === 'dma' ? (v.v - r.leakLs) * 3.6 : sn.kind === 'vv' ? t.demand * dfac(hourNow()) : sn.kind === 'arv' ? t.arvIn : t.arvIn * 0.55;
+      const name = sn.kind === 'dma' ? 'DMA ' + r.name : sn.kind === 'vv' ? 'Utgående ' + r.name : sn.kind === 'arv' ? 'Inkommande ' + r.name : r.name;
+      return { id: sn.id, name, kommun: sn.town, type: sn.kind === 'dma' ? 'ledningsnat' : 'pumpstation', typeTxt: { dma: 'Ledningsnät', vv: 'Vattenverk', arv: 'Reningsverk', ps: 'Pumpstation' }[sn.kind], typeShort: { dma: 'LN', vv: 'VV', arv: 'ARV', ps: 'PS' }[sn.kind], flow, normal };
+    });
+  }
+  function reservoirLevels(town) {
+    if (!D || !S) return null;
+    const list = D.sens.filter(sn => sn.kind === 'res' && (!town || sn.town === town)).map(sn => ({ name: (town ? '' : D.tById[sn.town].name + ' · ') + sn.ref.name.replace('Reservoar ' + D.tById[sn.town].name + ' ', 'Reservoar ').replace(' ' + D.tById[sn.town].name, ''), v: sensVal(sn).v }));
+    return town ? list : list.sort((a, b) => a.v - b.v).slice(0, 3);
+  }
+
   // a widget clicked in the right column → show that part of the operation in the twin
   function focusWidget(id) {
     if (!ctx || !D) return false;
@@ -1409,13 +1563,13 @@
     if (k === 'shut') { const s = D.streets[+v]; if (s) { shutOff(s); renderInfo(); renderHud(['legend']); } return; }
     if (k === 'unshut') { clearShut(); renderInfo(); renderHud(['legend']); return; }
     if (k === 'sms') { const sh = S.shut; if (!sh) return; const b = ctx.hudEl.querySelector('[data-a="sms"]'); if (b) { b.textContent = '✓ ' + nf(sh.meters) + ' SMS skickade (simulerat)'; b.classList.remove('pri'); } return; }
-    if (k === 'fac') { const f = D.fac[+v]; if (!f) return; if (!S.layers.fac) { S.layers.fac = true; syncLayers(); renderHud(['layers']); } flyTo([f.lat, f.lng], 14); return select({ type: 'fac', ref: f }); }
-    if (k === 'sens') { const sn = D.sens[+v]; if (!sn) return; if (!S.layers.sens || !S.cats.includes(sn.cat)) { S.layers.sens = true; if (!S.cats.includes(sn.cat)) S.cats.push(sn.cat); syncLayers(); renderHud(['layers', 'legend']); } flyTo([sn.lat, sn.lng], 14.5); return select({ type: 'sens', ref: sn }); }
-    if (k === 'bp') { const b = D.bps[+v]; if (!b) return; if (!S.layers.bradd) { S.layers.bradd = true; syncLayers(); renderHud(['layers']); } flyTo([b.lat, b.lng], 14.5); return select({ type: 'bp', ref: b }); }
+    if (k === 'fac') { const f = D.fac[+v]; if (!f) return; if (!S.layers.fac) { S.layers.fac = true; syncLayers(); renderHud(['layers']); } flyTo([f.lat, f.lng], 14); return openDetail('fac', f); }
+    if (k === 'sens') { const sn = D.sens[+v]; if (!sn) return; if (!S.layers.sens || !S.cats.includes(sn.cat)) { S.layers.sens = true; if (!S.cats.includes(sn.cat)) S.cats.push(sn.cat); syncLayers(); renderHud(['layers', 'legend']); } flyTo([sn.lat, sn.lng], 14.5); return openDetail('sens', sn); }
+    if (k === 'bp') { const b = D.bps[+v]; if (!b) return; if (!S.layers.bradd) { S.layers.bradd = true; syncLayers(); renderHud(['layers']); } flyTo([b.lat, b.lng], 14.5); return openDetail('bp', b); }
     if (k === 'badp') { const b = D.bad[+v]; if (!b) return; if (!S.layers.bad) { S.layers.bad = true; syncLayers(); renderHud(['layers']); } flyTo([b.lat, b.lng], 14); return select({ type: 'bad', ref: b }); }
     if (k === 'pipe') { const s = D.streets[+v]; if (!s) return; if (S.net === 'none') { S.net = 'dricks'; syncLayers(); renderHud(['layers', 'legend']); } flyTo(s.mid, 15); return select({ type: 'pipe', ref: s }); }
-    if (k === 'dma') { const d = D.dmas[+v]; if (!d) return; if (!S.layers.leaks && d.leak) { S.layers.leaks = true; syncLayers(); renderHud(['layers']); } flyTo(d.worst.mid, 15); return select({ type: 'dma', ref: d }); }
-    if (k === 'sink') { const s = D.sinks[+v]; if (!s) return; if (!S.layers.sinks) { S.layers.sinks = true; syncLayers(); renderHud(['layers', 'legend']); } flyTo([s.lat, s.lng], 14.5); return select({ type: 'sink', ref: s }); }
+    if (k === 'dma') { const d = D.dmas[+v]; if (!d) return; if (!S.layers.leaks && d.leak) { S.layers.leaks = true; syncLayers(); renderHud(['layers']); } flyTo(d.worst.mid, 15); return openDetail('dma', d); }
+    if (k === 'sink') { const s = D.sinks[+v]; if (!s) return; if (!S.layers.sinks) { S.layers.sinks = true; syncLayers(); renderHud(['layers', 'legend']); } flyTo([s.lat, s.lng], 14.5); return openDetail('sink', s); }
     if (k === 'dev') { const d = D.dev[+v]; if (!d) return; if (!S.layers.dev) { S.layers.dev = true; syncLayers(); renderHud(['layers']); } flyTo([d.lat, d.lng], 14); return select({ type: 'dev', ref: d }); }
   }
   function onClick(e) {
@@ -1498,7 +1652,8 @@
   }
 
   window.HydraVision = {
-    mount, unmount, focusWidget, focusTown,
+    mount, unmount, focusWidget, focusTown, detail, townList, townKpis,
+    flowMeters: () => (ctx && D ? flowMeters() : null), reservoirLevels: t => (ctx && D ? reservoirLevels(t) : null),
     setLens: l => { if (ctx && D && S && S.lens !== l) setLens(l, true); },
     // for MR. Hydra (chat agent) and tests
     state: () => S && { lens: S.lens, year: S.year, net: S.net, color: S.color, cats: S.cats, sim: { t: S.sim.t, running: S.sim.running, preset: S.sim.preset } },

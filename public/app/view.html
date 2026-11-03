@@ -2190,7 +2190,7 @@
         <!-- ===== MUNICIPALITY SUB-VIEW ===== -->
         <sc-if value="{{ wdet.muniOpen }}" hint-placeholder-val="{{ false }}">
           <div class="mo-slide-in" style="display:flex;align-items:baseline;gap:10px;flex:0 0 auto;margin-bottom:14px">
-            <span style="font-size:10px;letter-spacing:.2em;color:var(--ac,#35d6f2);text-transform:uppercase">Kommun</span>
+            <span style="font-size:10px;letter-spacing:.2em;color:var(--ac,#35d6f2);text-transform:uppercase">{{wdet.muni.kind}}</span>
             <span style="font-size:19px;font-weight:700;color:#eaf7fb;letter-spacing:.02em">{{wdet.muni.name}}</span>
           </div>
           <div class="mo-stagger" style="display:grid;grid-template-columns:repeat(6, 1fr);gap:12px;flex:0 0 auto;margin-bottom:18px">
@@ -2223,7 +2223,7 @@
             <!-- reservoir levels (dricks) -->
             <sc-if value="{{ wdet.muni.levelslength }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:13px">
-                <div style="font-size:10px;letter-spacing:.14em;color:#577684;text-transform:uppercase">Reservoarnivåer</div>
+                <div style="font-size:10px;letter-spacing:.14em;color:#577684;text-transform:uppercase">{{wdet.muni.levelsTitle}}</div>
                 <sc-for list="{{ wdet.muni.levels }}" as="r" hint-placeholder-count="2">
                   <div>
                     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
@@ -2242,6 +2242,19 @@
               <sc-for list="{{ wdet.muni.sections }}" as="sec" hint-placeholder-count="3">
                 <div>
                   <div style="font-size:10px;letter-spacing:.14em;color:#577684;text-transform:uppercase;margin-bottom:10px">{{sec.title}}</div>
+                  <!-- vision: clickable list of facilities/meters (opens that one) -->
+                  <sc-if value="{{ sec.isList }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px">
+                      <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="4">
+                        <div sc-camel-on-click="{{ it.open }}" class="mo-row" style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:10px;cursor:pointer;background:rgba(8,22,30,.4);border:1px solid rgba(74,196,224,.12);transition:border-color .2s ease,background .2s ease" style-hover="border-color:rgba(74,196,224,.4);background:rgba(74,196,224,.07)">
+                          <span style="width:9px;height:9px;flex:0 0 auto;border-radius:50%;background:{{it.color}};box-shadow:0 0 8px {{it.color}}"></span>
+                          <div style="flex:1;min-width:0"><div style="font-size:12px;color:#d6eef5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{it.name}}</div><div style="font-size:10px;color:#577684;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{it.sub}}</div></div>
+                          <span style="font-family:'JetBrains Mono';font-size:12px;color:{{it.color}};white-space:nowrap">{{it.val}}</span>
+                          <span style="color:#577684;font-size:13px">›</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
                   <sc-if value="{{ sec.isStats }}" hint-placeholder-val="{{ false }}">
                     <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:10px">
                       <sc-for list="{{ sec.items }}" as="k" hint-placeholder-count="6">

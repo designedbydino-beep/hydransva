@@ -47,6 +47,10 @@ Hydra är NSVA:s dashboard för vatten och avlopp i 8 kommuner i Nordvästra Sk�
   - Kartan zoomar in på kommunen och panelen visar kommunkortet med alla anläggningar.
   - `state.visionTown` gör att widgetarna visar kommunens data (`wsel` i `renderVals()`).
   - Den vanliga drill-down-rutan används inte i visionen.
+- **Detaljvyn har tre nivåer i visionen:** samlad, sedan kommun (`openWidgetMuni`), sedan en anläggning eller mätare (`openWidgetFac`, nyckel `fac:/sens:/bp:/dma:/sink:<id>`).
+  - Innehållet kommer från `HydraVision.detail()`, `townList()` och `townKpis()`.
+  - Klick på kartan och i panelerna öppnar rätt nivå. Regnmätare öppnar `openGauge()`.
+  - Widgetarna `flode` (`flowMeters()`) och `dricks` (reservoarnivåer) visar tvillingens mätare medan visionen är öppen.
 - **Anläggningar:** Verkliga VA-anläggningar från OpenStreetMap (`osm/va.json` i databygget) ersätter de terrängplacerade gissningarna där de finns. Det gäller vattentorn, vattenverk, reningsverk, pumpstationer, brunnar och magasin, men bara inom de 8 kommunernas gränser. De är märkta `src: 'OSM'`, och övriga anläggningar har `src: 'fiktiv'`.
 - HUD-panelerna kan dras i rubriken och minimeras. Placeringen sparas i localStorage under `nsva_vision_ui`.
 - Datan byggs med [tools/vision-data/](tools/vision-data/README.md) (`node fetch.mjs && node build.mjs`):

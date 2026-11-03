@@ -13,6 +13,7 @@ class Component extends DCLogic {
     focused: null,
     openWidget: null,
     openWidgetMuni: null,
+    openWidgetFac: null, // Hydra – visionen: third level – one facility or meter from the twin (key from app/vision.js)
     wdetFrom: null, // where the detail view grows from (the clicked card), see zoomFrom()
     leaving: {}, // overlays playing their exit animation, see leave()
     dragId: null,
@@ -1222,12 +1223,14 @@ class Component extends DCLogic {
       gauges: () => {
         const live = this.rainHistStations && this.rainHistStations.length;
         const list = live ? this.rainHistStations : this.rainStations().map(g => Object.assign({ src: 'SIM' }, g));
-        return list.map(g => ({ id: g.id || g.name, name: g.name, lat: g.lat, lng: g.lng, src: g.src, now: g.src === 'SIM' ? this.simRainAt(g.lat, g.lng, 0) : this.gaugeVal(g, 0) }));
+        return list.map(g => ({ id: g.id || g.name, name: g.name, lat: g.lat, lng: g.lng, src: g.src, raw: g, now: g.src === 'SIM' ? this.simRainAt(g.lat, g.lng, 0) : this.gaugeVal(g, 0) }));
       },
       stormF: (id) => this.stormF(id),
       filters: () => this.state.filters,
       toggleFilter: (k) => this.toggleFilter(k),
       openWidget: (id) => this.openWidgetDetail(id),
+      openDetail: (wid, mid, key) => this.openVisionDetail(wid, mid, key),
+      openGauge: (g) => { try { this.openGauge(g); } catch (e) {} },
       onLens: (l) => this.setState({ visionLens: l }),
       onTown: (id) => this.setState({ visionTown: id || null }),
       // simulation state for the widgets: the dashboard's own 2 s tick re-renders them; only a start/stop renders right away
@@ -2677,7 +2680,8 @@ class Component extends DCLogic {
   }
   flowMeters() {
     const live = this.flowLive && this.flowLive.length ? this.flowLive : null;
-    const list = live || this.baseFlowMeters().map((m, i) => {
+    const vis = this.state.view === 'vision' && window.HydraVision && window.HydraVision.flowMeters ? window.HydraVision.flowMeters() : null;
+    const list = vis || live || this.baseFlowMeters().map((m, i) => {
       const dev = i === 2 ? 0.42 : i === 7 ? -0.6 : 0; // simulated: one high flow (möjlig läcka) + one low (pump)
       return Object.assign({}, m, { flow: Math.max(0, this.j(m.normal * (1 + dev), m.normal * 0.04, i + 3)) });
     });
@@ -2688,7 +2692,7 @@ class Component extends DCLogic {
       const spark = Array.from({ length: 16 }, (_, k) => ({ h: Math.max(10, Math.min(100, Math.round(50 + Math.sin((this.state.tick + k + i) * 0.55) * 18 + devPct * 0.4))) }));
       return {
         id: m.id, name: m.name, kommun: m.kommun, kommunName: this.muniName(m.kommun),
-        isLn: m.type === 'ledningsnat', typeTxt: m.type === 'ledningsnat' ? 'Ledningsnät' : 'Pumpstation', typeShort: m.type === 'ledningsnat' ? 'LN' : 'PS',
+        isLn: m.type === 'ledningsnat', typeTxt: m.typeTxt || (m.type === 'ledningsnat' ? 'Ledningsnät' : 'Pumpstation'), typeShort: m.typeShort || (m.type === 'ledningsnat' ? 'LN' : 'PS'),
         flow: m.flow, normal: m.normal, flowTxt: this.fmt(m.flow), normalTxt: this.fmt(m.normal),
         lps: (Math.round(m.flow / 3.6 * 10) / 10).toString().replace('.', ','),
         devPct, devTxt: (devPct > 0 ? '+' : '') + devPct + ' %', status: st, color,
@@ -2712,7 +2716,21 @@ class Component extends DCLogic {
     };
   }
   widgetLabel(id) { return ({ matare: 'Regnmätare', flode: 'Flödesmätare', dricks: 'Dricksvatten', spill: 'Spillvatten', dag: 'Dagvatten', hav: 'Havsvattenstånd', radar: 'Väderradar & vind', prognos: 'Prognoser', ai: 'AI-notiser', alarm: 'Aktiva alarm', anmal: 'Anmälningar · översvämning' })[id] || id; }
-  openWidgetDetail(id, from) { this.setState({ openWidget: id, openWidgetMuni: null, wdetFrom: from || null }); }
+  openWidgetDetail(id, from) { this.setState({ openWidget: id, openWidgetMuni: null, openWidgetFac: null, wdetFrom: from || null }); }
+  visionSection(sec) {
+    return Object.assign({}, sec, { isStats: sec.kind === 'stats', isZones: sec.kind === 'zones', isBars: sec.kind === 'bars', isList: sec.kind === 'list',
+      items: sec.kind === 'list' ? sec.items.map(it => Object.assign({}, it, { open: () => this.setState({ openWidgetFac: it.key }) })) : sec.items });
+  }
+  visionLevel(key) {
+    const d = window.HydraVision.detail(key); if (!d) return null;
+    const sections = (d.sections || []).map(x => this.visionSection(x));
+    return { kind: d.kind, name: d.name, kpis: d.kpis || [], histLabel: d.histLabel || '', hist: this.bars(d.hist || [], d.histColor || this.acHex()),
+      hist2: d.hist2 ? this.bars(d.hist2, d.hist2Color || 'rgba(47,230,196,.75)') : [], hist2length: !!d.hist2, histLong: false,
+      levels: d.levels || [], levelslength: !!(d.levels && d.levels.length), levelsTitle: d.levelsTitle || '',
+      sections, sectionslength: sections.length > 0, back: () => this.setState({ openWidgetFac: null }) };
+  }
+  // vision: open the detail view straight at one facility/meter (back → its kommun → samlad)
+  openVisionDetail(wid, mid, key) { this.setState({ openWidget: wid, openWidgetMuni: mid || null, openWidgetFac: key || null, wdetFrom: null }); }
   // Clicked card's centre relative to the stage centre (stage px) and its width relative to the detail view,
   // so the detail view can grow out of the card (css/motion.css .mo-zoom).
   zoomFrom(e) {
@@ -2731,7 +2749,7 @@ class Component extends DCLogic {
       this.setState({ leaving: l });
     }, 200);
   }
-  closeWidgetDetail() { this.setState({ openWidget: null, openWidgetMuni: null }); }
+  closeWidgetDetail() { this.setState({ openWidget: null, openWidgetMuni: null, openWidgetFac: null }); }
   // ---------- live data snapshot for the JARVIS text agent (Copilot) ----------
   resolveWidget(name) {
     const map = { spillvatten: 'spill', avloppsvatten: 'spill', spillvattnet: 'spill', dricksvatten: 'dricks', dricksvattnet: 'dricks', dagvattnet: 'dag', flödesmät: 'flode', flodesmat: 'flode', flöde: 'flode', flode: 'flode', anmäl: 'anmal', anmal: 'anmal', översväm: 'anmal', oversvam: 'anmal', väderradar: 'radar', vaderradar: 'radar', nederbörd: 'prognos', 'ai-notis': 'ai', 'aktiva alarm': 'alarm', drick: 'dricks', vatten: 'dricks', spill: 'spill', avlopp: 'spill', dagvatten: 'dag', dag: 'dag', skyfall: 'dag', hav: 'hav', havsvatten: 'hav', havsniv: 'hav', vattenstånd: 'hav', tidvatten: 'hav', väder: 'radar', vader: 'radar', radar: 'radar', vind: 'radar', prognos: 'prognos', notis: 'ai', ai: 'ai', alarm: 'alarm', larm: 'alarm' };
@@ -2849,14 +2867,14 @@ class Component extends DCLogic {
         stat('CO₂ per m³', num(j(8.5, 1, 12)), 'g/m³', '#2fe6c4'),
       ] });
     }
-    sec.forEach(s => { s.isStats = s.kind === 'stats'; s.isZones = s.kind === 'zones'; s.isBars = s.kind === 'bars'; });
+    sec.forEach(s => { s.isStats = s.kind === 'stats'; s.isZones = s.kind === 'zones'; s.isBars = s.kind === 'bars'; s.isList = false; });
     return sec;
   }
   widgetMuniDetail(wid, mid) {
     const m = this.baseMunis().find(x => x.id === mid); if (!m) return null;
     const sys = this.systems(mid);
     const ac = this.acHex();
-    const o = { name: m.name, kpis: [], histLabel: '', hist: [], hist2: [], hist2length: false, histLong: false, levels: [], levelslength: false, back: () => this.setState({ openWidgetMuni: null }) };
+    const o = { kind: 'Kommun', levelsTitle: 'Reservoarnivåer', name: m.name, kpis: [], histLabel: '', hist: [], hist2: [], hist2length: false, histLong: false, levels: [], levelslength: false, back: () => this.setState({ openWidgetMuni: null }) };
     if (wid === 'dricks') {
       const prod = this.j(m.prod, m.prod * 0.02, 3);
       o.kpis = [
@@ -3090,7 +3108,7 @@ class Component extends DCLogic {
       out.histLabel = 'Totalt flöde · senaste 24 h (m³/h)';
       out.hist = this.bars(this.longHist(tot, tot * 0.14, 2), ac);
       out.rows = fm.slice().sort((a, b) => (a.status === 'ok') - (b.status === 'ok') || b.flow - a.flow)
-        .map(m => ({ name: m.name + ' · ' + m.kommunName, ropen: () => { this.closeWidgetDetail(); this.selectMuni(m.kommun); }, c1: m.typeTxt, c1color: '#9bc3d0', c2: m.flowTxt + ' m³/h  (' + m.lps + ' l/s)', c2color: '#eaf7fb', c3: m.devTxt + ' · ' + m.statusTxt, c3color: m.color }));
+        .map(m => ({ name: m.name + ' · ' + m.kommunName, ropen: () => { if (this.state.view === 'vision') { this.openVisionDetail('flode', m.kommun, 'sens:' + m.id); return; } this.closeWidgetDetail(); this.selectMuni(m.kommun); }, c1: m.typeTxt, c1color: '#9bc3d0', c2: m.flowTxt + ' m³/h  (' + m.lps + ' l/s)', c2color: '#eaf7fb', c3: m.devTxt + ' · ' + m.statusTxt, c3color: m.color }));
       out.cols3 = ['Mätare', 'Typ', 'Flöde', 'Mot normal'];
     } else if (id === 'alarm') {
       out.subtitle = 'Aktiva alarm & händelselogg';
@@ -3140,7 +3158,15 @@ class Component extends DCLogic {
     const hasRows = ['dricks', 'spill', 'dag', 'radar'].includes(id);
     out.sections = ['dricks', 'spill', 'dag'].includes(id) ? this.widgetSections(id, null) : [];
     out.sectionslength = out.sections.length > 0;
-    const sub = (mid && hasRows) ? this.widgetMuniDetail(id, mid) : null;
+    const vis = this.state.view === 'vision' && window.HydraVision;
+    let sub = vis && this.state.openWidgetFac ? this.visionLevel(this.state.openWidgetFac) : (mid && hasRows) ? this.widgetMuniDetail(id, mid) : null;
+    // vision, kommun level: the kommun's facilities from the twin, clickable down to each one
+    if (vis && sub && !this.state.openWidgetFac && window.HydraVision.townList) {
+      const extra = window.HydraVision.townList(mid, id);
+      if (extra) { sub.sections = [this.visionSection(extra)].concat(sub.sections || []); sub.sectionslength = true; }
+      const kp = window.HydraVision.townKpis && window.HydraVision.townKpis(mid, id);
+      if (kp) sub.kpis = kp;
+    }
     out.muniOpen = !!sub;
     out.muniClosed = !sub;
     out.muni = sub || { kpis: [], hist: [], hist2: [], levels: [], sections: [], hist2length: false, levelslength: false, sectionslength: false, histLong: false };
@@ -3498,6 +3524,7 @@ class Component extends DCLogic {
       dagFlow = ids.reduce((a, id) => a + byId[id].prod * (0.12 + 1.2 * Math.min(1, vs.rain / 45)), 0);
       vsOver = ids.some(id => T(id).overflowing);
     }
+    if (this.state.view === 'vision' && window.HydraVision && window.HydraVision.reservoirLevels) { const r = window.HydraVision.reservoirLevels(sel); if (r && r.length) drinkLevels = r; }
     const drinkOK = turb < 0.5;
     const bradd = (vsOver || magLvl > 85 || pumpLvl > 88) ? 'AKTIV' : ((sf >= 0.6 || pumpLvl > 70) ? 'RISK' : 'NEJ');
     const braddColor = bradd === 'AKTIV' ? '#ff5a6e' : bradd === 'RISK' ? '#ffb547' : '#2fe6c4';
