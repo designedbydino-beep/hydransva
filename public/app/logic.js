@@ -1117,11 +1117,12 @@ class Component extends DCLogic {
     const byId = {}; munis.forEach(m => { byId[m.id] = m; });
     const map = L.map(this.mapEl, {
       zoomControl: false, attributionControl: true,
-      dragging: true, scrollWheelZoom: true, doubleClickZoom: true, touchZoom: true,
-      boxZoom: false, keyboard: false, tap: false, zoomSnap: 0.5, zoomDelta: 1, wheelPxPerZoomLevel: 70, wheelDebounceTime: 20, minZoom: 6, maxZoom: 14,
+      dragging: true, scrollWheelZoom: false, doubleClickZoom: true, touchZoom: true,
+      boxZoom: false, keyboard: false, tap: false, zoomSnap: 0.5, zoomDelta: 1, minZoom: 6, maxZoom: 14,
       zoomAnimation: true, fadeAnimation: true, markerZoomAnimation: true, bounceAtZoomLimits: false, inertia: true,
     });
     this.map = map;
+    this.smoothWheelZoom(map);
     L.control.zoom({ position: 'topright', zoomInTitle: 'Zooma in', zoomOutTitle: 'Zooma ut' }).addTo(map);
     // "hela området" button under the zoom control
     const Home = L.Control.extend({ options: { position: 'topright' }, onAdd: () => {
@@ -1157,6 +1158,47 @@ class Component extends DCLogic {
     setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 250);
     setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 800);
     this.applyMapFilters();
+  }
+  // Continuous wheel/trackpad zoom. Leaflet's own wheel zoom jumps in zoomSnap steps with a pause between each,
+  // so a trackpad swipe stutters and keeps zooming after the gesture. This eases toward the target every frame,
+  // the same way Leaflet's pinch zoom moves the map (tiles scale during the gesture, reload once it ends).
+  // Trackpad pinch: Chrome/Edge/Firefox send it as ctrl+wheel, Safari as its own gesture events (handled below).
+  // Touchscreen pinch is Leaflet's built-in touchZoom.
+  smoothWheelZoom(map) {
+    const L = window.L, el = map.getContainer();
+    let goal = 0, pt = null, ll = null, raf = 0, last = 0, active = false, gz = null;
+    const end = () => { cancelAnimationFrame(raf); raf = 0; if (active) { active = false; map._moveEnd(true); } };
+    const step = t => {
+      const z = map.getZoom(), d = goal - z;
+      const nz = Math.abs(d) < 0.004 ? goal : z + d * (1 - Math.exp(-Math.min(50, t - last) / 75));
+      last = t;
+      const c = map.unproject(map.project(ll, nz).subtract(pt.subtract(map.getSize().divideBy(2))), nz);
+      map._move(c, nz, { pinch: true, round: false });
+      if (nz === goal) end(); else raf = requestAnimationFrame(step);
+    };
+    // zoom toward z, keeping the spot under the pointer fixed
+    const aim = (e, z) => {
+      // re-anchor only when the pointer actually moved — re-reading every event lets pixel rounding creep in
+      const np = map.mouseEventToContainerPoint(e);
+      if (!active || np.distanceTo(pt) > 2) { pt = np; ll = map.containerPointToLatLng(pt); }
+      if (!active) { active = true; map._stop(); map._moveStart(true, false); last = performance.now(); raf = requestAnimationFrame(step); }
+      goal = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), z));
+    };
+    L.DomEvent.on(el, 'wheel', e => {
+      L.DomEvent.stop(e);
+      if (gz !== null) return; // Safari pinch in progress
+      const px = e.deltaMode === 1 ? e.deltaY * 20 : e.deltaMode === 2 ? e.deltaY * 60 : e.deltaY;
+      // trackpad pinch arrives as ctrl+wheel with small deltas — make it as responsive as a swipe
+      if (px) aim(e, (active ? goal : map.getZoom()) - px / (e.ctrlKey ? 50 : 120));
+    });
+    // Safari (Mac trackpad): e.scale is the pinch factor since gesturestart. Skipped on touch devices,
+    // where the same gesture is already handled by Leaflet's touchZoom.
+    if (!navigator.maxTouchPoints) {
+      L.DomEvent.on(el, 'gesturestart', e => { L.DomEvent.preventDefault(e); gz = active ? goal : map.getZoom(); });
+      L.DomEvent.on(el, 'gesturechange', e => { L.DomEvent.preventDefault(e); if (gz !== null) aim(e, gz + Math.log2(e.scale)); });
+      L.DomEvent.on(el, 'gestureend', e => { L.DomEvent.preventDefault(e); gz = null; });
+    }
+    map.on('dragstart', end);
   }
   // Real municipality borders for the 8 NSVA kommuner — pre-clipped to the coastline (no sea overshoot), embedded via kommuner.js.
   loadBoundaries(L, map) {
@@ -1713,9 +1755,10 @@ class Component extends DCLogic {
     const L = window.L;
     const m = this.baseMunis().find(x => x.id === sel); if (!m) return;
     const map = L.map(this.detailEl, {
-      zoomControl: false, attributionControl: false, scrollWheelZoom: true,
+      zoomControl: false, attributionControl: false, scrollWheelZoom: false,
       dragging: true, doubleClickZoom: true, fadeAnimation: false,
     });
+    this.smoothWheelZoom(map);
     this.detailMap = map; this.detailMapEl = this.detailEl; this.detailMapFor = sel;
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, maxNativeZoom: 16 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
