@@ -110,7 +110,8 @@ for (const t of towns) {
   const nodes = []; ways.forEach(w => w.geometry.forEach(g => nodes.push({ lat: g.lat, lng: g.lon })));
   t.ways = ways; t.nodes = nodes;
   const north = cellsWithin(t, t.r * 0.95, p => p.lat > t.lat), south = cellsWithin(t, t.r * 0.95, p => p.lat <= t.lat);
-  const hi = arr => argmax(arr, x => E[x.k] - x.d * 0.004);
+  // highest ground, but no more than ~55 m above the town centre (a real reservoir zone; Båstad otherwise ends up on Hallandsåsen)
+  const e0 = E[cellOf(t.lat, t.lng)], hi = arr => argmax(arr.filter(x => E[x.k] <= e0 + 55), x => E[x.k] - x.d * 0.004) || argmax(arr, x => -Math.abs(E[x.k] - e0 - 40));
   const rn = hi(north) || hi(south), rs = hi(south) || hi(north);
   t.resN = fac({ id: t.id + '-resn', town: t.id, type: 'reservoar', name: 'Reservoar Norra', lat: rn.p.lat, lng: rn.p.lng });
   t.resS = fac({ id: t.id + '-ress', town: t.id, type: 'reservoar', name: 'Reservoar Södra', lat: rs.p.lat, lng: rs.p.lng });
@@ -146,7 +147,9 @@ for (const t of towns) {
     const year = Math.round(rel < 0.35 ? 1925 + hr * 38 : rel < 0.7 ? 1952 + hr * 35 : 1972 + hr * 50);
     const em = elev(mid), ea = elev(a), eb = elev(b);
     const hd = head(mid);
-    let pr = hd.h - em; // m vattenpelare
+    let pr = hd.h - em, prv = false; // m vattenpelare
+    // too much pressure in the low parts → tryckreducerad zon (PRV), like a real network
+    if (pr > 72) { prv = r1(pr); pr = Math.min(60, 48 + (pr - 72) * 0.15); }
     const mat = year < 1955 ? 'Gjutjärn' : year < 1972 ? 'Segjärn' : year < 1990 ? 'PVC' : 'PE';
     const dim = cls >= 4 ? 400 : cls === 3 ? 300 : cls === 2 ? 200 : 160;
     // spill/dag: gravity along the street, flow towards the lower end
@@ -160,20 +163,22 @@ for (const t of towns) {
     const ageRisk = Math.min(1, (2026 - year) / 100), matRisk = { Gjutjärn: 1, Segjärn: 0.55, PVC: 0.35, PE: 0.12 }[mat];
     const risk = Math.round(Math.min(100, (ageRisk * 55 + matRisk * 30 + Math.max(0, pr - 55) * 0.6 + (cls >= 3 ? 10 : 0)) * (0.85 + hr * 0.3)));
     streets.push({ t: t.id, p: enc(pts), c: cls, l: Math.round(len), dm: dma, dmn: dmaName(dma), e: r1(em),
-      dr: { y: year, m: mat, d: dim, pr: r1(pr), rk: risk, z: hd.res.id },
+      dr: { y: year, m: mat, d: dim, pr: r1(pr), rk: risk, z: hd.res.id, pr0: prv || undefined },
       sp: { y: year, m: spMat, d: cls >= 3 ? 400 : 225, s: r1(slope), f: flow },
       dg: { y: dagYear, m: dagYear < 1995 ? 'Betong' : 'PP', d: cls >= 3 ? 600 : 300, a: catchCells, ds: dagDesign, f: flow } });
   }
   // pressure zones: streets under 2,2 bar get a tryckstegringsstation (booster) at their lowest-pressure cluster
   const low = streets.filter(s => s.t === t.id && s.dr.pr < 22);
   t.lowPressure = low.length;
-  if (low.length >= 3) {
+  if (low.length) {
     // centroid of the low-pressure streets → booster at the street node nearest to the centroid but on the tower side
     const dec = s => { const p = s.p; let i = 0, la = 0, lg = 0; const out = []; while (i < p.length) { let b, sh = 0, r = 0; do { b = p.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); la += r & 1 ? ~(r >> 1) : r >> 1; sh = 0; r = 0; do { b = p.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); lg += r & 1 ? ~(r >> 1) : r >> 1; out.push({ lat: la / 1e5, lng: lg / 1e5 }); } return out; };
     const pts = low.flatMap(dec), c = { lat: pts.reduce((s, p) => s + p.lat, 0) / pts.length, lng: pts.reduce((s, p) => s + p.lng, 0) / pts.length };
     const nearest = pts.reduce((b, p) => dist(p, c) < dist(b, c) ? p : b, pts[0]);
-    t.booster = fac({ id: t.id + '-tst', town: t.id, type: 'booster', name: 'Tryckstegring ' + t.name, lat: nearest.lat, lng: nearest.lng, lift: 25 });
-    low.forEach(s => { s.dr.pr0 = s.dr.pr; s.dr.pr = r1(s.dr.pr + 25); s.dr.z = t.booster.id; });
+    // lift sized for the highest street in the zone (≥ 3 bar there), never above 6,5 bar in the zone
+    const lift = Math.min(60, Math.max(25, Math.ceil((30 - Math.min(...low.map(s => s.dr.pr))) / 5) * 5));
+    t.booster = fac({ id: t.id + '-tst', town: t.id, type: 'booster', name: 'Tryckstegring ' + t.name, lat: nearest.lat, lng: nearest.lng, lift });
+    low.forEach(s => { s.dr.pr0 = s.dr.pr; s.dr.pr = r1(Math.max(28, Math.min(65, s.dr.pr + lift))); s.dr.z = t.booster.id; });
   }
   // central pump station: lowest street point in the core (spillvatten collects here)
   const core = t.nodes.filter(p => dist(p, t) < t.r * 0.5);

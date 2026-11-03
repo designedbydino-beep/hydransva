@@ -1204,7 +1204,7 @@ class Component extends DCLogic {
   // ---- Hydra – visionen: app/vision.js mounts into the left-column panel + map HUD once both exist ----
   visionRef(kind, el) {
     this['_vis' + kind] = el;
-    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; return; }
+    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; this.visionSim = null; return; }
     this.syncVision();
   }
   syncVision() {
@@ -1217,7 +1217,19 @@ class Component extends DCLogic {
       rainNow: () => this.peakRainAt(0),
       rainAt: (h) => this.peakRainAt(Math.max(0, Math.min(12, h))),
       seaCm: () => { try { return this.seaLevel().maxCm; } catch (e) { return 0; } },
+      sea: () => { try { return this.seaLevel().stations; } catch (e) { return []; } },
+      gauges: () => {
+        const live = this.rainHistStations && this.rainHistStations.length;
+        const list = live ? this.rainHistStations : this.rainStations().map(g => Object.assign({ src: 'SIM' }, g));
+        return list.map(g => ({ id: g.id || g.name, name: g.name, lat: g.lat, lng: g.lng, src: g.src, now: g.src === 'SIM' ? this.simRainAt(g.lat, g.lng, 0) : this.gaugeVal(g, 0) }));
+      },
+      stormF: (id) => this.stormF(id),
+      filters: () => this.state.filters,
+      toggleFilter: (k) => this.toggleFilter(k),
+      openWidget: (id) => this.openWidgetDetail(id),
       onLens: (l) => this.setState({ visionLens: l }),
+      // simulation state for the widgets; re-render at most once a second
+      onSim: (vs) => { this.visionSim = vs; const now = Date.now(); if (!this._visSimT || now - this._visSimT > 1000 || !vs.active) { this._visSimT = now; this.setState(s => ({ tick: s.tick })); } },
     });
   }
   // the overview's straight kommun-to-kommun lines are replaced by the routed trunks in the vision
@@ -1868,7 +1880,9 @@ class Component extends DCLogic {
     });
     const order = { KRITISK: 0, VARNING: 1, INFO: 2 };
     rain.sort((a, b) => order[a.sev] - order[b.sev]);
-    return rain.concat(this.baseAlarms());
+    // alarms raised by the twin's simulation (bräddning, dämda ledningar, fulla lågpunkter) come first
+    const vis = this.state.view === 'vision' && this.visionSim && this.visionSim.active ? (this.visionSim.alarms || []) : [];
+    return vis.concat(rain, this.baseAlarms());
   }
   sevColor(s) { return s === 'KRITISK' ? '#ff5a6e' : s === 'VARNING' ? '#ffb547' : '#35d6f2'; }
   sevBg(s) { return s === 'KRITISK' ? 'rgba(255,90,110,.08)' : s === 'VARNING' ? 'rgba(255,181,71,.07)' : 'rgba(53,214,242,.06)'; }
@@ -3314,7 +3328,11 @@ class Component extends DCLogic {
       dim: this.state.dragId && this.state.dragId !== id && this.state.dragActive ? '0.62' : '1',
       onDown: (e) => this.startDrag(id, e),
       onClick: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
-      open: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; } this.openWidgetDetail(id, this.zoomFrom(e)); },
+      open: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; }
+        if (this.state.view === 'vision' && window.HydraVision && window.HydraVision.focusWidget(id)) return;
+        this.openWidgetDetail(id, this.zoomFrom(e));
+      },
       hide: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (e && e.preventDefault) e.preventDefault(); if (this.viewCol(id)) this.toggleWidget(id); },
       hideDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
     };
@@ -3466,8 +3484,19 @@ class Component extends DCLogic {
         { name: 'Helsingborg · Ringstorp', v: this.j(81, 1.2, 2) },
       ];
     }
+    // Hydra – visionen: while its skyfall simulation runs, spill/dag show the simulated state of the twin
+    const vs = this.state.view === 'vision' && this.visionSim && this.visionSim.active ? this.visionSim : null;
+    let vsOver = false;
+    if (vs) {
+      const ids = sel ? [sel] : baseM.map(m => m.id), T = id => vs.towns[id] || {};
+      spillFlow = ids.reduce((a, id) => a + (T(id).q || 0), 0);
+      pumpLvl = Math.min(100, Math.max(...ids.map(id => (T(id).load || 0) * 82)));
+      magLvl = Math.min(100, ids.reduce((a, id) => a + (T(id).fill || 0), 0) / ids.length);
+      dagFlow = ids.reduce((a, id) => a + byId[id].prod * (0.12 + 1.2 * Math.min(1, vs.rain / 45)), 0);
+      vsOver = ids.some(id => T(id).overflowing);
+    }
     const drinkOK = turb < 0.5;
-    const bradd = (magLvl > 85 || pumpLvl > 88) ? 'AKTIV' : ((sf >= 0.6 || pumpLvl > 70) ? 'RISK' : 'NEJ');
+    const bradd = (vsOver || magLvl > 85 || pumpLvl > 88) ? 'AKTIV' : ((sf >= 0.6 || pumpLvl > 70) ? 'RISK' : 'NEJ');
     const braddColor = bradd === 'AKTIV' ? '#ff5a6e' : bradd === 'RISK' ? '#ffb547' : '#2fe6c4';
     const dagStatus = magLvl > 85 ? 'KRITISK' : magLvl > 65 ? 'HÖG' : 'NORMAL';
     const dagColor = magLvl > 85 ? '#ff5a6e' : magLvl > 65 ? '#ffb547' : '#2fe6c4';

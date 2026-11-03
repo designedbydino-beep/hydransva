@@ -35,6 +35,15 @@ Hydra är NSVA:s dashboard för vatten och avlopp i 8 kommuner i Nordvästra Sk�
   - Modulen äger sitt eget innehåll i DOM i dessa två ytor och sina egna Leaflet-paneler (`hv*`).
   - React rör inte det innehållet. Rendera inte barn dit från mallen.
 - Lägen (`lens`): `oversikt`, `produktion`, `distribution`, `samhalle`. Högerkolumnens widgets per läge står i `viewDefs().vision`.
+- **Kopplingen till dagens widgets** går åt båda hållen.
+  - Ett klick på en widget i visionen anropar `HydraVision.focusWidget(id)` och visar den delen i tvillingen. Detaljvyn nås via fokuskortet.
+  - Visionen rapporterar sin simulering via `ctx.onSim()` till `this.visionSim`. Därifrån tar `systems()` (spillvatten och dagvatten) och `currentAlarms()` över medan simuleringen körs.
+  - Kartlagren från dagens Hydra (nederbörd, regnmätare, anmälningar, alarm, vind) slås av och på via `ctx.toggleFilter()`.
+- **Tvillingens innehåll:**
+  - Mätpunkter (`buildSensors()`, `sensVal()`): flöde, nivå, tryck, regn (live från `ctx.gauges()`), kvalitet, hav (live), grundvatten, läckloggrar och energi.
+  - Bräddpunkter med kammarnivå, plym, badplatser och EU-indikatorn (< 2 %).
+  - Prognosstyrd bräddrisk (`forecast()`), vattenålder och avstängningsanalys (`shutOff()`).
+- HUD-panelerna kan dras i rubriken och minimeras. Placeringen sparas i localStorage under `nsva_vision_ui`.
 - Datan byggs med [tools/vision-data/](tools/vision-data/README.md) (`node fetch.mjs && node build.mjs`):
   - Terrängen kommer från AWS Terrain Tiles och gatorna från OpenStreetMap. Båda är verkliga.
   - Ledningar, anläggningar och exploateringsområden är **påhittade**. Visa det alltid som simulerad data.
