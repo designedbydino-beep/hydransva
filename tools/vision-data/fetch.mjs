@@ -44,6 +44,8 @@ async function overpass(name, q) {
 await tiles();
 const bb = `${BB.s},${BB.w},${BB.n},${BB.e}`;
 await overpass('main', `[out:json][timeout:180];way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"](${bb});out geom;`);
+// public VA facilities (OpenStreetMap): water towers, works, treatment plants, pumping stations, wells, tanks
+await overpass('va', `[out:json][timeout:150];(nwr["man_made"~"^(water_tower|water_works|wastewater_plant|reservoir_covered|pumping_station|water_well|storage_tank)$"](${bb});nwr["pumping_station"](${bb}););out center tags;`);
 for (const t of TOWNS) {
   await overpass('town-' + t.id, `[out:json][timeout:120];way["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street)$"](around:${t.r},${t.lat},${t.lng});out geom;`);
 }

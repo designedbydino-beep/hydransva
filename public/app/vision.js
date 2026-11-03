@@ -591,17 +591,23 @@
     const sz = 22, b = body => '<div class="hv-fac" style="width:' + sz + 'px;height:' + sz + 'px"><svg width="' + sz + '" height="' + sz + '" viewBox="0 0 24 24">' + body + '</svg></div>';
     switch (f.type) {
       case 'vattenverk': return b('<path d="M12 2l9 5v10l-9 5-9-5V7z" fill="#0a2a3c" stroke="#4aa8ff" stroke-width="1.6"/><path d="M12 7s-3.2 3.6-3.2 5.8a3.2 3.2 0 0 0 6.4 0C15.2 10.6 12 7 12 7z" fill="#4aa8ff"/>');
-      case 'reservoar': { const lv = f._lvl || 70; return b('<circle cx="12" cy="12" r="10" fill="#071c28" stroke="#35d6f2" stroke-width="1.6"/><clipPath id="c' + f.id + '"><circle cx="12" cy="12" r="8.2"/></clipPath><rect x="2" y="' + (20.2 - lv / 100 * 16.4) + '" width="20" height="20" fill="#35d6f2" opacity=".75" clip-path="url(#c' + f.id + ')"/>'); }
+      case 'reservoar': if (f.tower) return b('<path d="M7 3h10l-1.6 7H8.6z" fill="#071c28" stroke="#35d6f2" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.4 10l-1.4 11M14.6 10l1.4 11M8.6 15.5h6.8" stroke="#35d6f2" stroke-width="1.5" stroke-linecap="round"/><rect x="8.6" y="' + (9.4 - (f._lvl || 70) / 100 * 5.6) + '" width="6.8" height="' + ((f._lvl || 70) / 100 * 5.6) + '" fill="#35d6f2" opacity=".7"/>');
+      { const lv = f._lvl || 70; return b('<circle cx="12" cy="12" r="10" fill="#071c28" stroke="#35d6f2" stroke-width="1.6"/><clipPath id="c' + f.id + '"><circle cx="12" cy="12" r="8.2"/></clipPath><rect x="2" y="' + (20.2 - lv / 100 * 16.4) + '" width="20" height="20" fill="#35d6f2" opacity=".75" clip-path="url(#c' + f.id + ')"/>'); }
       case 'pump': return b('<rect x="3" y="3" width="18" height="18" rx="4" fill="#2a1a08" stroke="' + (f.planned ? '#ffce7a' : '#e0a050') + '" stroke-width="1.6" ' + (f.planned ? 'stroke-dasharray="3 2"' : '') + '/><path d="M8 15l4-6 4 6" fill="none" stroke="#e0a050" stroke-width="2" stroke-linecap="round"/>');
       case 'arv': return b('<rect x="2" y="4" width="20" height="16" rx="5" fill="#2a1a08" stroke="#e0a050" stroke-width="1.6"/><path d="M5 13c2-2.5 3.5-2.5 5 0s3 2.5 5 0 3-2.5 4 0" fill="none" stroke="#ffce7a" stroke-width="1.7" stroke-linecap="round"/>');
+      case 'brunn': return b('<circle cx="12" cy="12" r="9" fill="#0a2a3c" stroke="#4aa8ff" stroke-width="1.6"/><path d="M12 6v9M8.5 11.5L12 15l3.5-3.5" fill="none" stroke="#9fdcff" stroke-width="1.8" stroke-linecap="round"/>');
+      case 'magasin': return b('<rect x="3" y="7" width="18" height="12" rx="3" fill="#2a1a08" stroke="#e0a050" stroke-width="1.6"/><path d="M3 12h18" stroke="#e0a050" stroke-width="1.2" stroke-dasharray="2 2"/>');
       case 'booster': return b('<path d="M12 3l9 16H3z" fill="#1d1430" stroke="#c9b6ff" stroke-width="1.6"/><path d="M12 9v6M9.5 11.5L12 9l2.5 2.5" fill="none" stroke="#c9b6ff" stroke-width="1.8" stroke-linecap="round"/>');
       default: return b('<circle cx="12" cy="12" r="8" fill="#123" stroke="#fff"/>');
     }
   }
-  const FAC_LABEL = { vattenverk: 'Vattenverk', reservoar: 'Reservoar', pump: 'Pumpstation', arv: 'Reningsverk', booster: 'Tryckstegring' };
+  const FAC_LABEL = { vattenverk: 'Vattenverk', reservoar: 'Reservoar', pump: 'Pumpstation', arv: 'Reningsverk', booster: 'Tryckstegring', brunn: 'Vattentäkt', magasin: 'Utjämningsmagasin' };
+  const facLabel = f => f.type === 'reservoar' && f.tower ? 'Vattentorn' : FAC_LABEL[f.type] || f.type;
+  const srcTag = f => f.src === 'OSM' ? '<span class="hv-src osm" title="Verklig position från OpenStreetMap">OSM</span>' : '<span class="hv-src" title="Påhittad placering">fiktiv</span>';
   function facVisible(f) {
     if (!S.layers.fac) return false;
-    if (map.getZoom() < 10.5 && !['vattenverk', 'arv'].includes(f.type)) return false;
+    if (S.town === f.town) return true; // the kommun in focus shows everything
+    if (map.getZoom() < 10.5 && !(['vattenverk', 'arv'].includes(f.type) && !f.small)) return false;
     if (S.lens === 'produktion') return ['vattenverk', 'reservoar', 'booster', 'arv'].includes(f.type);
     return true;
   }
@@ -815,7 +821,7 @@
     D.fac.forEach(f => {
       f._lvl = 55 + hash(f.id) * 35;
       f._mk = L.marker([f.lat, f.lng], { pane: 'hvFac', icon: L.divIcon({ className: '', iconSize: [0, 0], html: facIcon(f) }) });
-      f._mk.bindTooltip('<b>' + esc(f.name) + '</b><br>' + FAC_LABEL[f.type] + (f.planned ? ' · planerad ' + f.planned : ''), { className: 'nsva-tip', direction: 'top', offset: [0, -12] });
+      f._mk.bindTooltip('<b>' + esc(f.name) + '</b><br>' + facLabel(f) + (f.planned ? ' · planerad ' + f.planned : '') + (f.src === 'OSM' ? ' · position från OpenStreetMap' : ''), { className: 'nsva-tip', direction: 'top', offset: [0, -12] });
       f._mk.on('click', () => select({ type: 'fac', ref: f }));
     });
     layers.fac = fl;
@@ -858,12 +864,13 @@
     });
     layers.leaks = lk;
     layers.shut = L.layerGroup();
+    layers.flbl = L.layerGroup();
     layers.particles = makeParticles();
     layers.trunkFlow = makeTrunkFlow();
     map.on('zoomend', onZoomEnd); map.on('moveend', onMoveEnd);
     map.on('mousemove', onMouseMove);
   }
-  function onZoomEnd() { streamVis(); styleNet(); syncFacilities(); zoomLabels(); syncSensors(); syncBradd(); }
+  function onZoomEnd() { streamVis(); styleNet(); syncFacilities(); zoomLabels(); townLabels(); syncSensors(); syncBradd(); }
   function onMoveEnd() { syncSensors(); }
   // labels and small markers only once there is room for them
   function zoomLabels() {
@@ -883,6 +890,7 @@
     if (!map.hasLayer(layers.bradd)) layers.bradd.addTo(map);
     if (!map.hasLayer(layers.bad)) layers.bad.addTo(map);
     if (!map.hasLayer(layers.shut)) layers.shut.addTo(map);
+    if (!map.hasLayer(layers.flbl)) layers.flbl.addTo(map);
     const sh = layers.streams._hvHost; if (S.layers.streams) { if (!map.hasLayer(sh)) sh.addTo(map); } else if (map.hasLayer(sh)) map.removeLayer(sh);
     streamVis();
     // trunks: drinking-water trunks with the dricksvatten net, planned spill trunks with spill / samhällsutveckling
@@ -909,7 +917,8 @@
 
   // ---------- selection / info card ----------
   function select(sel) { if (S.shut && !(sel && sel.type === 'pipe' && sel.ref === S.shut.from)) clearShut(); S.sel = sel; renderInfo(); }
-  function flyTo(p, z) { map.flyTo(p, z || Math.max(map.getZoom(), 13), { duration: 0.9 }); }
+  // land the target left of the info card (which sits right of centre) instead of underneath it
+  function flyTo(p, z) { const zz = z || Math.max(map.getZoom(), 13), c = map.unproject(map.project(L.latLng(p), zz).add([200, 40]), zz); map.flyTo(c, zz, { duration: 0.9 }); }
   function region() { map.flyToBounds(D.towns.map(t => [t.lat, t.lng]), { paddingTopLeft: [120, 110], paddingBottomRight: [260, 160], duration: 1.1 }); }
   function spark(vals, c) {
     const W = 270, H = 44, mx = Math.max(...vals), mn = Math.min(...vals), sp = mx - mn || 1;
@@ -947,15 +956,17 @@
     }
     if (sel.type === 'fac') {
       const f = sel.ref, t = m.towns.find(x => x.id === f.town), q = S.sim.q && S.sim.q[f.town];
-      const rows = [['Kommun', town(f.town)], ['Markhöjd', nf(f.elev, 1) + ' m ö.h.']];
+      const rows = [['Kommun', town(f.town)], ['Position', f.src === 'OSM' ? 'OpenStreetMap (verklig)' : 'påhittad'], ['Markhöjd', nf(f.elev, 1) + ' m ö.h.']];
       let txt = '', w = null;
       if (f.type === 'vattenverk') { w = 'dricks'; rows.push(['Kapacitet', nf(t.cap) + ' m³/h'], ['Behov ' + S.year, nf(t.demand) + ' m³/h'], ['Nyttjandegrad', Math.round(t.demand / t.cap * 100) + ' %'], ['PFAS4', nf(0.5 + hash(f.town + '-vv') * 2.2, 1) + ' ng/l (gräns 4)'], ['Energi', nf(0.32 + hash(f.id + 'e') * 0.2, 2) + ' kWh/m³']); txt = t.demand / t.cap > 0.85 ? 'Nära kapacitetstaket ' + S.year + ' – utbyggnad eller regional överföring krävs.' : 'Kapacitet räcker ' + S.year + '.'; }
-      else if (f.type === 'reservoar') { w = 'dricks'; rows.push(['Nivå nu', Math.round(f._lvl) + ' %'], ['Vattenyta', nf(f.head, 1) + ' m ö.h.'], ['Reservtid', nf(6 + hash(f.id) * 10, 0) + ' h']); txt = 'Placerad på ortens högsta punkt – höjden ger trycket i nätet utan pumpar.'; }
+      else if (f.type === 'reservoar') { w = 'dricks'; rows.push(['Nivå nu', Math.round(f._lvl) + ' %'], ['Vattenyta', nf(f.head, 1) + ' m ö.h.'], ['Reservtid', nf(6 + hash(f.id) * 10, 0) + ' h'], ['Försörjer', D.streets.filter(s => s.zone === f.id).length + ' ledningar']); txt = f.tower ? 'Vattentornet står högt – vattenytan i tornet ger trycket i nätet utan pumpar.' : 'Placerad på ortens högsta punkt – höjden ger trycket i nätet utan pumpar.'; }
+      else if (f.type === 'brunn') { w = 'dricks'; rows.push(['Uttag nu', nf(15 + hash(f.id) * 40) + ' m³/h'], ['Grundvattennivå', nf(3 + hash(f.id + 'g') * 4, 1) + ' m u.my']); txt = 'Grundvattentäkt med vattenskyddsområde. Nivån följs kontinuerligt för att upptäcka torka i tid.'; }
+      else if (f.type === 'magasin') { w = 'spill'; rows.push(['Volym', nf(200 + hash(f.id) * 1800) + ' m³'], ['Fyllnad nu', Math.round((q ? Math.min(1, q.load * 0.7) : 0.1) * 100) + ' %']); txt = 'Utjämningsmagasin som tar emot spillvatten vid kraftigt regn – minskar bräddningen nedströms.'; }
       else if (f.type === 'booster') { rows.push(['Tryckhöjning', '+' + f.lift + ' m (' + nf(f.lift / 10, 1) + ' bar)'], ['Försörjer', D.streets.filter(s => s.zone === f.id).length + ' ledningar']); txt = 'Här ligger marken för högt för att reservoaren ska ge tillräckligt tryck – tryckstegringen skapar en egen tryckzon.'; }
       else if (f.type === 'arv') { w = 'spill'; rows.push(['Kapacitet', nf(t.arvCap) + ' m³/h'], ['Inflöde nu', nf(q ? Math.min(q.q, q.pumpCap) : t.arvIn) + ' m³/h'], ['Belastning', Math.round((q ? q.arv : t.arvLoad) * 100) + ' %'], q && q.bypass > 0 ? ['Nödavlastning', nf(q.bypass) + ' m³/h'] : null); txt = (q && q.bypass > 0) ? 'Verket tar inte emot allt – delvis renat vatten släpps via nödavlastningen.' : t.arvLoad > 0.85 ? 'Reningsverket närmar sig full belastning – nya EU-krav (mikroföroreningar) kräver dessutom ett fjärde reningssteg.' : 'Ligger lågt vid recipienten så att spillvattnet når verket med självfall.'; }
       else if (f.type === 'pump') { w = 'spill'; rows.push(['Kapacitet', nf(f.cap) + ' m³/h'], f.lift ? ['Lyfthöjd', nf(f.lift, 1) + ' m'] : null, f.planned ? ['Status', 'Planerad ' + f.planned] : ['Belastning', Math.round((q ? q.load : 0.45) * 100) + ' %']); txt = f.planned ? 'Planerad station: terrängen stiger längs överföringen, så vattnet måste pumpas över höjden.' : 'Ortens lägsta punkt – här samlas spillvattnet. Förtömning inför regn ger plats i sumpen och minskar bräddning.'; }
       const sens = D.sens.filter(sn => sn.ref === f);
-      return head(f.name, FAC_LABEL[f.type] + (f.planned ? ' · planerad' : '')) + kv(rows) + (sens.length ? '<div class="hv-cap" style="margin:10px 0 4px">Mätpunkter</div>' + sens.map(sn => sensRow(sn)).join('') : '') + note(txt, COL.ok) + (w ? btns([['widget:' + w, 'Öppna detaljvy →']]) : '');
+      return head(f.name, facLabel(f) + (f.planned ? ' · planerad' : '')) + kv(rows) + (sens.length ? '<div class="hv-cap" style="margin:10px 0 4px">Mätpunkter</div>' + sens.map(sn => sensRow(sn)).join('') : '') + note(txt, COL.ok) + (w ? btns([['widget:' + w, 'Öppna detaljvy →']]) : '');
     }
     if (sel.type === 'sens') {
       const sn = sel.ref, v = sensVal(sn), c = SENS[sn.cat], stc = v.st === 'bad' ? COL.bad : v.st === 'warn' ? COL.warn : COL.ok;
@@ -1141,7 +1152,7 @@
         '<div class="hv-txt" style="margin-top:12px">AI-prognos 48 h · behov (blå) mot kapacitet (streckad)</div>' + lineChart([{ v: hours, c: COL.dricks, fill: true }, { v: hours.map(() => m.capTot), c: COL.warn, dash: '5 5', w: 1.4 }], { h: 90, min: 0, labels: [{ i: 0, t: 'nu', a: 'start' }, { i: 24, t: '+24 h' }, { i: 48, t: '+48 h', a: 'end' }] }));
       body += card('Vattenverk ' + y, m.towns.map(t => { const u = t.demand / t.cap; return '<div class="hv-row" data-a="fac:' + D.fac.indexOf(D.fById[t.id + '-vv']) + '"><div class="hv-n">' + esc(t.name) + '<small>' + nf(t.cap) + ' m³/h kapacitet · PFAS4 ' + nf(0.5 + hash(t.id + '-vv') * 2.2, 1) + ' ng/l</small></div><div style="width:84px">' + bar(u * 100, u > 0.85 ? COL.bad : u > 0.7 ? COL.warn : COL.ok) + '</div><div class="hv-v">' + Math.round(u * 100) + '%</div></div>'; }).join(''));
       body += card('Vattenkvalitet', D.sens.filter(sn => sn.cat === 'kvalitet' && sn.kind === 'vv').map(sensRow).join('') + '<div class="hv-cap" style="margin:10px 0 4px">I nätet (restklor)</div>' + D.sens.filter(sn => sn.cat === 'kvalitet' && sn.kind === 'net').sort((a, b) => sensVal(a).v - sensVal(b).v).slice(0, 4).map(sensRow).join(''), 'Kontinuerligt');
-      body += card('Reservoarer & reservtid', D.fac.filter(f => f.type === 'reservoar').slice(0, 8).map(f => '<div class="hv-row" data-a="fac:' + D.fac.indexOf(f) + '"><div class="hv-n">' + esc(D.tById[f.town].name) + ' · ' + f.name.replace('Reservoar ', '') + '<small>vattenyta ' + nf(f.head, 0) + ' m ö.h.</small></div><div style="width:84px">' + bar(f._lvl, '#35d6f2') + '</div><div class="hv-v">' + Math.round(f._lvl) + '%</div></div>').join(''));
+      body += card('Vattentorn & reservoarer', D.fac.filter(f => f.type === 'reservoar').slice(0, 10).map(f => '<div class="hv-row" data-a="fac:' + D.fac.indexOf(f) + '"><div class="hv-n">' + esc(f.name) + '<small>' + esc(D.tById[f.town].name) + ' · vattenyta ' + nf(f.head, 0) + ' m ö.h.</small></div><div style="width:84px">' + bar(f._lvl, '#35d6f2') + '</div><div class="hv-v">' + Math.round(f._lvl) + '%</div></div>').join(''));
       body += card('Grundvatten & råvatten', D.sens.filter(sn => sn.cat === 'grund').map(sensRow).join('') + '<div class="hv-foot" style="padding:8px 0 0">Djupet ökar med varmare somrar' + (y > 2026 ? ' – scenario ' + y : '') + '.</div>');
       body += card('Energi & klimat', '<div class="hv-kpis">' + kpi('0,41', 'kWh/m³', 'Produktion', 'mål 2030: 0,33', COL.warn) + kpi('62', '%', 'Energineutralitet ARV', 'biogas + sol · mål 2045', COL.ok) + kpi(nf(D.sens.filter(sn => sn.cat === 'energi').reduce((a, sn) => a + sensVal(sn).v, 0)), 'kW', 'Effekt just nu', D.sens.filter(sn => sn.cat === 'energi').length + ' elmätare') + kpi('−14', '%', 'Prisstyrd pumpning', 'AI-optimerad', COL.ok) + '</div>');
       body += card('AI-insikter', insightsFor(m), 'Hydra AI');
@@ -1172,6 +1183,7 @@
       body += braddCard(m);
       body += card('AI-insikter', insightsFor(m), 'Hydra AI');
     }
+    if (S.town) body = townCard(m) + body;
     const foot = '<div class="hv-foot">Terräng: AWS Terrain Tiles (bl.a. EU-DEM). Gator: © OpenStreetMap. Regn och havsnivå är live. Ledningar, anläggningsdata, mätpunkter, exploateringsområden och siffror i visionen är påhittade för att visa möjligheterna.</div>';
     return '<div class="hv-panel">' + head + body + foot + '</div>';
   }
@@ -1231,6 +1243,7 @@
     const pnl = (name, title, extra) => '<div class="hv-pnl hv-glass ' + PANEL_DEFAULT[name] + '" data-pnl="' + name + '"' + (name === 'info' ? ' hidden' : '') + '><div class="hv-ph" data-drag="' + name + '" title="Dra för att flytta"><span class="hv-grip">⋮⋮</span><span class="hv-pt">' + title + '</span>' + (extra || '') + '<span class="hv-pbtn" data-a="' + (name === 'info' ? 'close' : 'min:' + name) + '" title="' + (name === 'info' ? 'Stäng' : 'Minimera / visa') + '">' + (name === 'info' ? '✕' : '–') + '</span></div><div class="hv-pb" data-body="' + name + '"></div></div>';
     return '<div class="hv-hud">' +
       '<div class="hv-lens hv-glass" data-lens></div>' +
+      '<div class="hv-crumb hv-glass" data-crumb hidden></div>' +
       pnl('year', 'Scenario', '<span class="hv-ptag">Simulerad data</span>') +
       pnl('layers', 'Kartlager') +
       pnl('legend', 'Teckenförklaring') +
@@ -1275,6 +1288,8 @@
     const h = ctx && ctx.hudEl; if (!h) return;
     const set = (sel, html) => { const n = h.querySelector(sel); if (n && n._html !== html) { n.innerHTML = html; n._html = html; } };
     const all = !parts;
+    const cr = h.querySelector('[data-crumb]');
+    if (cr) { cr.hidden = !S.town; if (S.town) set('[data-crumb]', '<span class="hv-cb" data-a="region">◀ Hela regionen</span><span class="hv-ct">' + esc(D.tById[S.town].name) + ' kommun</span>'); }
     if (all || parts.includes('lens')) set('[data-lens]', LENSES.map(l => '<div class="hv-seg' + (S.lens === l.id ? ' on' : '') + '" data-a="lens:' + l.id + '">' + svgIc(l.ic, 15) + l.label + '</div>').join(''));
     if (all || parts.includes('year')) set('[data-body="year"]', '<div class="hv-years">' + YEARS.map(y => '<div class="hv-seg' + (S.year === y ? ' on' : '') + '" data-a="year:' + y + '">' + y + '</div>').join('') + '</div><div class="hv-ysub"><b>' + SCEN[S.year].txt + '</b> · regn ×' + nf(SCEN[S.year].clim, 1) + ' · hav +' + nf(SCEN[S.year].sea * 100) + ' cm · ' + nf(D.towns.reduce((a, t) => a + popAt(t.id, S.year), 0) / 1000) + ' tusen inv.</div>');
     if (all || parts.includes('layers')) {
@@ -1303,6 +1318,7 @@
     syncLayers(); renderHud(); renderPanel(true); redrawTerrain();
     if (!fromOutside && ctx.onLens) ctx.onLens(l);
     // distribution is about the street network → go to the largest town; the other lenses look at the region
+    if (S.town) return; // stay in the kommun in focus
     if (l === 'distribution') map.flyTo([56.047, 12.712], 13.4, { duration: 1.1 });
     else if (map.getZoom() > 11) region();
   }
@@ -1313,6 +1329,44 @@
     S.layers.sinks = true; S.layers.bradd = true;
     syncLayers(); syncSinks(true); renderHud(); styleNet();
   }
+  // ---- kommun i fokus: zoom the twin into one kommun (replaces the drill-down overlay of plain Hydra) ----
+  function townBounds(id) {
+    const t = D.tById[id], f = window.NSVA_KOMMUNER && window.NSVA_KOMMUNER.features.find(x => x.properties.kom_namn === t.name);
+    if (f) return L.geoJSON(f).getBounds();
+    return L.latLngBounds(D.fac.filter(x => x.town === id).map(x => [x.lat, x.lng]));
+  }
+  function focusTown(id) {
+    if (!ctx || !D || (id && !D.tById[id])) return false;
+    S.town = id || null;
+    if (S.town) { S.layers.fac = true; map.flyToBounds(townBounds(id), { paddingTopLeft: [300, 120], paddingBottomRight: [260, 170], duration: 1.1, maxZoom: 13.5 }); }
+    else region();
+    if (ctx.onTown) ctx.onTown(S.town);
+    clearShut(); S.sel = null; renderInfo();
+    syncLayers(); townLabels(); renderHud(); renderPanel(true);
+    const col = ctx.panelEl && ctx.panelEl.parentElement; if (col) col.scrollTop = 0;
+    return true;
+  }
+  // name labels for the kommun in focus, once there is room
+  function townLabels() {
+    const lg = layers.flbl; if (!lg) return;
+    lg.clearLayers();
+    if (!S.town || map.getZoom() < 11.8) return;
+    D.fac.filter(f => f.town === S.town && facVisible(f)).forEach(f => lg.addLayer(L.marker([f.lat, f.lng], { pane: 'hvFac', interactive: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: '<div class="hv-flbl">' + esc(f.name) + '</div>' }) })));
+  }
+  function townCard(m) {
+    const id = S.town, t = D.tById[id], mt = m.towns.find(x => x.id === id), facs = D.fac.filter(f => f.town === id);
+    const st = D.streets.filter(s => s.town === id), len = st.reduce((a, s) => a + s.len, 0) / 1000, dm = D.dmas.filter(d => d.town === id);
+    const bps = D.bps.filter(b => b.town === id), sens = D.sens.filter(sn => sn.town === id), sAl = sens.filter(sn => (sn._v || {}).st === 'bad').length;
+    const q = S.sim.q && S.sim.q[id], arvLoad = q ? q.arv : mt.arvLoad;
+    const groups = [['vattenverk', 'Vattenverk'], ['brunn', 'Vattentäkter'], ['reservoar', 'Vattentorn & reservoarer'], ['booster', 'Tryckstegring'], ['arv', 'Reningsverk'], ['pump', 'Pumpstationer'], ['magasin', 'Utjämningsmagasin']];
+    const rows = groups.map(([k, label]) => { const list = facs.filter(f => f.type === k); if (!list.length) return ''; return '<div class="hv-cap" style="margin:12px 0 4px">' + label + ' · ' + list.length + '</div>' + list.map(f => '<div class="hv-row" data-a="fac:' + D.fac.indexOf(f) + '"><div class="hv-n">' + esc(f.name) + '<small>' + facLabel(f) + (f.planned ? ' · planerad ' + f.planned : '') + '</small></div>' + srcTag(f) + '</div>').join(''); }).join('') +
+      '<div class="hv-cap" style="margin:12px 0 4px">Bräddpunkter · ' + bps.length + '</div>' + bps.map(b => '<div class="hv-row" data-a="bp:' + D.bps.indexOf(b) + '"><span class="hv-light" style="--c:' + (b.now > 0 ? COL.bad : b.yearN > 6 ? COL.warn : COL.ok) + '"></span><div class="hv-n">' + esc(b.name) + '<small>' + b.recipient + ' · ' + b.yearN + ' ggr i år</small></div>' + srcTag(b) + '</div>').join('');
+    return '<div class="hv-card hv-town"><div class="hv-h"><span class="hv-dot"></span>' + esc(t.name) + ' kommun<span class="hv-tag" style="cursor:pointer;color:#bcd9e3;border-color:rgba(74,196,224,.35);background:rgba(8,22,30,.6)" data-a="region">◀ Hela regionen</span></div>' +
+      '<div class="hv-kpis">' + kpi(nf(mt.pop / 1000, 1), 'tusen', 'Invånare ' + S.year) + kpi(nf(mt.demand), 'm³/h', 'Vattenbehov', Math.round(mt.demand / mt.cap * 100) + ' % av kapacitet') + kpi(Math.round(arvLoad * 100), '%', 'Belastning ARV', q && q.bypass > 0 ? 'nödavlastning pågår' : 'kapacitet ' + nf(mt.arvCap) + ' m³/h', arvLoad > 1 ? COL.bad : arvLoad > 0.85 ? COL.warn : COL.ok) + kpi(nf(len, 1), 'km', 'Modellerat nät', st.length + ' ledningar · ' + dm.length + ' DMA') +
+      kpi(facs.length + bps.length, 'st', 'Anläggningar', facs.filter(f => f.src === 'OSM').length + ' med verklig position') + kpi(sens.length, 'st', 'Mätpunkter', sAl ? sAl + ' i larm' : 'alla normala', sAl ? COL.bad : COL.ok) + kpi(dm.filter(d => d.leak).length, 'st', 'Läckor', dm.filter(d => d.ao).map(d => d.ao.id).join(', ') || 'inga', dm.some(d => d.leak) ? COL.warn : COL.ok) + kpi(D.sinks.filter(x => x.town === id).length, 'st', 'Lågpunkter', nf(D.sinks.filter(x => x.town === id).reduce((a, x) => a + x.vol, 0)) + ' m³') + '</div>' +
+      rows + '<div class="hv-foot" style="padding:10px 0 0">OSM = verklig position från OpenStreetMap. Övriga anläggningar är placerade efter terrängen och ledningsnätet.</div></div>';
+  }
+
   // a widget clicked in the right column → show that part of the operation in the twin
   function focusWidget(id) {
     if (!ctx || !D) return false;
@@ -1328,13 +1382,15 @@
     else if (id === 'alarm') { need('alarm'); S.layers.sens = true; }
     else return false;
     syncLayers(); renderHud(); renderPanel(true);
-    if (map.getZoom() > 11.5) region();
+    if (!S.town && map.getZoom() > 11.5) region();
     select({ type: 'focus', w: id });
     return true;
   }
   function act(a, e) {
     const i = a.indexOf(':'), k = i < 0 ? a : a.slice(0, i), v = i < 0 ? '' : a.slice(i + 1);
     if (k === 'lens') return setLens(v);
+    if (k === 'region') return focusTown(null);
+    if (k === 'town') return focusTown(v);
     if (k === 'year') { S.year = +v; S._m = model(); if (S.sim.preset !== 'live') { const t = S.sim.t; S.sim.series = hyeto(S.sim.preset, SCEN[S.year].clim); S.sim.t = t; } redrawTerrain(); styleNet(); syncSensors(); renderHud(); renderPanel(true); renderInfo(); return; }
     if (k === 'net') { S.net = v; const modes = COLOR_MODES[v]; if (modes.length && !modes.some(x => x[0] === S.color)) S.color = modes[0][0]; syncLayers(); renderHud(['layers', 'legend']); if (S.lens === 'distribution') renderPanel(true); return; }
     if (k === 'color') { S.color = v; styleNet(); renderHud(['layers', 'legend']); return; }
@@ -1398,7 +1454,7 @@
     unmount();
     const seq = ++mountSeq;
     ctx = c; L = window.L; map = c.map;
-    S = { lens: c.lens || 'oversikt', year: 2026, net: 'dricks', color: 'typ', layers: {}, cats: [], surge: false, sel: null, shut: null, ui: loadUi(), sim: { running: false, t: 0, preset: 'r100', series: null, overflowM3: 0, rainSum: 0, q: null } };
+    S = { town: null, lens: c.lens || 'oversikt', year: 2026, net: 'dricks', color: 'typ', layers: {}, cats: [], surge: false, sel: null, shut: null, ui: loadUi(), sim: { running: false, t: 0, preset: 'r100', series: null, overflowM3: 0, rainSum: 0, q: null } };
     c.panelEl.innerHTML = '<div class="hv-panel"><div class="hv-card hv-hero"><div class="hv-hero-t">HYDRA · VISIONEN</div><div class="hv-hero-s">Laddar terräng, rinnvägar, ledningsnät och mätpunkter…</div></div></div>';
     c.panelEl._html = null; c.hudEl.innerHTML = '';
     return loadData().then(data => {
@@ -1430,7 +1486,7 @@
       map.off('zoomend', onZoomEnd); map.off('moveend', onMoveEnd); map.off('mousemove', onMouseMove);
       if (layers.particles) layers.particles.remove();
       if (layers.trunkFlow) layers.trunkFlow.remove();
-      ['terrain', 'net', 'trunks', 'sinks', 'fac', 'dev', 'leaks', 'sens', 'bradd', 'bad', 'shut'].forEach(k => { if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
+      ['terrain', 'net', 'trunks', 'sinks', 'fac', 'dev', 'leaks', 'sens', 'bradd', 'bad', 'shut', 'flbl'].forEach(k => { if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
       if (layers.streams) { const h = layers.streams._hvHost; h.clearLayers(); if (map.hasLayer(h)) map.removeLayer(h); }
       (layers.renderers || []).forEach(r => { if (map.hasLayer(r)) map.removeLayer(r); });
     }
@@ -1442,7 +1498,7 @@
   }
 
   window.HydraVision = {
-    mount, unmount, focusWidget,
+    mount, unmount, focusWidget, focusTown,
     setLens: l => { if (ctx && D && S && S.lens !== l) setLens(l, true); },
     // for MR. Hydra (chat agent) and tests
     state: () => S && { lens: S.lens, year: S.year, net: S.net, color: S.color, cats: S.cats, sim: { t: S.sim.t, running: S.sim.running, preset: S.sim.preset } },

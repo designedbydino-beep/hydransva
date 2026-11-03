@@ -28,6 +28,7 @@ class Component extends DCLogic {
     tv: false, // skärmläget är borttaget – TV:n har touch och kör den vanliga versionen
     view: null, // null = startmeny · 'hydra' | 'visky' | 'prod' | 'vision'
     visionLens: 'oversikt', // Hydra – visionen: oversikt | produktion | distribution | samhalle
+    visionTown: null, // kommun the vision has zoomed into (widgets follow it)
     viewHidden: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_hidden') || '{}'); } catch (e) { return {}; } })(),
     viewLayout: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_layout') || '{}'); } catch (e) { return {}; } })(),
     filters: { skyfall: false, vind: false, alarm: false, anmal: false, regn: false, radartack: false },
@@ -1204,7 +1205,7 @@ class Component extends DCLogic {
   // ---- Hydra – visionen: app/vision.js mounts into the left-column panel + map HUD once both exist ----
   visionRef(kind, el) {
     this['_vis' + kind] = el;
-    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; this.visionSim = null; return; }
+    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; this.visionSim = null; if (this.state.visionTown) this.setState({ visionTown: null }); return; }
     this.syncVision();
   }
   syncVision() {
@@ -1228,6 +1229,7 @@ class Component extends DCLogic {
       toggleFilter: (k) => this.toggleFilter(k),
       openWidget: (id) => this.openWidgetDetail(id),
       onLens: (l) => this.setState({ visionLens: l }),
+      onTown: (id) => this.setState({ visionTown: id || null }),
       // simulation state for the widgets: the dashboard's own 2 s tick re-renders them; only a start/stop renders right away
       onSim: (vs) => { const was = !!(this.visionSim && this.visionSim.active); this.visionSim = vs; if (was !== !!vs.active) this.setState(s => ({ tick: s.tick })); },
     });
@@ -1963,7 +1965,8 @@ class Component extends DCLogic {
     };
     return G[id] || null;
   }
-  selectMuni(id) { this.setState({ selected: id, selFac: null }); }
+  // in the vision a kommun opens on the twin map itself instead of the drill-down overlay
+  selectMuni(id) { if (this.state.view === 'vision' && window.HydraVision && window.HydraVision.focusTown(id)) return; this.setState({ selected: id, selFac: null }); }
   selectFac(idx) { this.setState({ selFac: idx }); }
   backFac() { this.setState({ selFac: null }); }
   back() { this.setState({ selected: null, selFac: null }); }
@@ -4392,8 +4395,10 @@ class Component extends DCLogic {
 
     // alarms (filtered when a municipality is selected)
     const sel = this.state.selected;
+    // widget data follows the drill-down, or in the vision the kommun it has zoomed into
+    const wsel = sel || (this.state.view === 'vision' ? this.state.visionTown : null);
     const baseA = this.currentAlarms();
-    const alarmsRaw = sel ? baseA.filter(a => a.muni === sel) : baseA;
+    const alarmsRaw = wsel ? baseA.filter(a => a.muni === wsel) : baseA;
     const alarms = alarmsRaw.map(a => ({
       sev: a.sev, msg: a.msg, time: a.time, muniName: this.muniName(a.muni),
       color: this.sevColor(a.sev), bg: this.sevBg(a.sev), border: this.sevBorder(a.sev),
@@ -4505,13 +4510,13 @@ class Component extends DCLogic {
 
       radarCells, forecast,
 
-      sys: this.systems(sel),
+      sys: this.systems(wsel),
       sea: this.seaLevel(),
       wdet: this.widgetDetailData(),
       prog: this.prognos(),
-      aiList: this.aiNotices(sel),
-      aiCount: this.aiNotices(sel).length,
-      noAi: sel && this.aiNotices(sel).length === 0,
+      aiList: this.aiNotices(wsel),
+      aiCount: this.aiNotices(wsel).length,
+      noAi: wsel && this.aiNotices(wsel).length === 0,
       wind: this.wind(),
       radarMmh: this.weather ? (Math.round(this.weather.maxP * 10) / 10).toString().replace('.', ',') + ' mm/h' : '32 mm/h',
       radarMmhColor: this.rainHex(this.weather ? (this.weather.maxP || 0) : 32),
@@ -4552,7 +4557,7 @@ class Component extends DCLogic {
         matare: this.widgetCtl('matare'),
       },
       rg: this.gaugeWidget(),
-      anm: this.reportsSummary(sel),
+      anm: this.reportsSummary(wsel),
       colLeft: this.colDropCtl('left'),
       colRight: this.colDropCtl('right'),
       settingsOpen: this.state.settingsOpen,

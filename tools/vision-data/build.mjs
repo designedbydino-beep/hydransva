@@ -113,8 +113,8 @@ for (const t of towns) {
   // highest ground, but no more than ~55 m above the town centre (a real reservoir zone; Båstad otherwise ends up on Hallandsåsen)
   const e0 = E[cellOf(t.lat, t.lng)], hi = arr => argmax(arr.filter(x => E[x.k] <= e0 + 55), x => E[x.k] - x.d * 0.004) || argmax(arr, x => -Math.abs(E[x.k] - e0 - 40));
   const rn = hi(north) || hi(south), rs = hi(south) || hi(north);
-  t.resN = fac({ id: t.id + '-resn', town: t.id, type: 'reservoar', name: 'Reservoar Norra', lat: rn.p.lat, lng: rn.p.lng });
-  t.resS = fac({ id: t.id + '-ress', town: t.id, type: 'reservoar', name: 'Reservoar Södra', lat: rs.p.lat, lng: rs.p.lng });
+  t.resN = fac({ id: t.id + '-resn', town: t.id, type: 'reservoar', name: 'Reservoar ' + t.name + ' norra', lat: rn.p.lat, lng: rn.p.lng });
+  t.resS = fac({ id: t.id + '-ress', town: t.id, type: 'reservoar', name: 'Reservoar ' + t.name + ' södra', lat: rs.p.lat, lng: rs.p.lng });
   // vattentorn/reservoar water level: ground + 28 m
   t.resN.head = r1(t.resN.elev + 28); t.resS.head = r1(t.resS.elev + 28);
   // reningsverk: low ground at the recipient (sea or a large stream), towards the town edge
@@ -127,10 +127,47 @@ for (const t of towns) {
   t.vv = fac({ id: t.id + '-vv', town: t.id, type: 'vattenverk', name: t.name + ' Vattenverk', lat: vv.p.lat, lng: vv.p.lng, cap: Math.round(t.prod * 1.3) });
 }
 
+// ---------- verkliga VA-anläggningar från OpenStreetMap, inom NSVA:s åtta kommuner ----------
+// Where OSM has the real plant/tower, it replaces the terrain-sited guess; everything else is added as an extra facility.
+const KOM_FILE = fs.existsSync(OUT + '/kommuner.js') ? OUT + '/kommuner.js' : new URL('../../public/data/kommuner.js', import.meta.url);
+const KOM = (() => { const w = {}; new Function('window', fs.readFileSync(KOM_FILE, 'utf8'))(w); return w.NSVA_KOMMUNER; })();
+const inRing = (p, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > p.lat) !== (yj > p.lat) && p.lng < (xj - xi) * (p.lat - yi) / (yj - yi) + xi) c = !c; } return c; };
+const komOf = p => { for (const f of KOM.features) { const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates; if (polys.some(pl => inRing(p, pl[0]))) { const t = towns.find(x => x.name === f.properties.kom_namn); return t ? t.id : null; } } return null; };
+const kindOf = t => { const m = t.man_made; if (m === 'water_tower') return 'tower'; if (m === 'reservoir_covered') return 'reservoir'; if (m === 'water_works') return 'vattenverk'; if (m === 'wastewater_plant') return 'arv'; if (m === 'pumping_station' || t.pumping_station) return 'pump'; if (m === 'water_well') return 'brunn'; if (m === 'storage_tank' && /wastewater|sewage/.test(t.content || t.substance || '')) return 'magasin'; return null; };
+let osmVa = fs.existsSync('osm/va.json') ? JSON.parse(fs.readFileSync('osm/va.json', 'utf8')).elements.map(e => ({ tags: e.tags || {}, lat: e.lat != null ? e.lat : e.center && e.center.lat, lng: e.lon != null ? e.lon : e.center && e.center.lon, osm: e.type + '/' + e.id })).filter(o => o.lat != null) : [];
+osmVa = osmVa.map(o => Object.assign(o, { kind: kindOf(o.tags), town: komOf(o) })).filter(o => o.kind && o.town);
+// a covered reservoir next to a tower is the same site
+osmVa = osmVa.filter(o => !(o.kind === 'reservoir' && osmVa.some(q => q.kind === 'tower' && dist(q, o) < 250)));
+let osmUsed = 0;
+const osmName = (o, t, label) => o.tags.name || (label + ' ' + t.name + (o.kind === 'arv' || o.kind === 'vattenverk' ? '' : ''));
+for (const t of towns) {
+  const mine = k => osmVa.filter(o => o.town === t.id && k.includes(o.kind)).sort((a, b) => dist(a, t) - dist(b, t));
+  const move = (f, o, name, extra) => { Object.assign(f, { lat: r5(o.lat), lng: r5(o.lng), name, src: 'OSM', osm: o.osm }, extra || {}); f.elev = r1(elev(f)); o.used = true; osmUsed++; };
+  // reservoarer/vattentorn: the two closest become the zone heads, further ones serve other villages in the kommun
+  const tw = mine(['tower', 'reservoir']);
+  const head = o => o.kind === 'tower' ? 35 : 6;
+  if (tw[0]) { move(t.resN, tw[0], osmName(tw[0], t, tw[0].kind === 'tower' ? 'Vattentorn' : 'Reservoar'), { tower: tw[0].kind === 'tower' }); t.resN.head = r1(t.resN.elev + head(tw[0])); }
+  const second = tw.slice(1).find(o => dist(o, tw[0]) > 800);
+  if (second) { move(t.resS, second, osmName(second, t, second.kind === 'tower' ? 'Vattentorn' : 'Reservoar') + (second.tags.name ? '' : ' 2'), { tower: second.kind === 'tower' }); t.resS.head = r1(t.resS.elev + head(second)); }
+  tw.filter(o => !o.used).forEach((o, i) => { const f = fac({ id: t.id + '-res' + (i + 3), town: t.id, type: 'reservoar', name: osmName(o, t, o.kind === 'tower' ? 'Vattentorn' : 'Reservoar') + (o.tags.name ? '' : ' ' + (i + 3)), lat: o.lat, lng: o.lng, src: 'OSM', osm: o.osm, tower: o.kind === 'tower' }); f.head = r1(f.elev + head(o)); o.used = true; osmUsed++; });
+  const vv = mine(['vattenverk']);
+  if (vv[0] && dist(vv[0], t) < 9000) move(t.vv, vv[0], vv[0].tags.name || t.name + ' Vattenverk');
+  vv.filter(o => !o.used).forEach((o, i) => { fac({ id: t.id + '-vv' + (i + 2), town: t.id, type: 'vattenverk', name: o.tags.name || 'Vattenverk ' + t.name + ' ' + (i + 2), lat: o.lat, lng: o.lng, cap: Math.round(t.prod * 0.12), src: 'OSM', osm: o.osm }); o.used = true; osmUsed++; });
+  const arv = mine(['arv']);
+  if (arv[0] && dist(arv[0], t) < 9000) move(t.arv, arv[0], arv[0].tags.name || t.name + ' ARV');
+  arv.filter(o => !o.used).forEach((o, i) => { fac({ id: t.id + '-arv' + (i + 2), town: t.id, type: 'arv', name: o.tags.name || 'Reningsverk ' + t.name + ' ' + (i + 2), lat: o.lat, lng: o.lng, cap: Math.round(t.prod * 0.08), src: 'OSM', osm: o.osm, small: true }); o.used = true; osmUsed++; });
+  mine(['pump']).forEach((o, i) => { fac({ id: t.id + '-ops' + i, town: t.id, type: 'pump', name: o.tags.name || 'Pumpstation ' + t.name + ' ' + (i + 1), lat: o.lat, lng: o.lng, cap: Math.round(t.prod * 0.15), src: 'OSM', osm: o.osm }); o.used = true; osmUsed++; });
+  mine(['brunn']).forEach((o, i) => { fac({ id: t.id + '-br' + i, town: t.id, type: 'brunn', name: o.tags.name || 'Vattentäkt ' + t.name + ' ' + (i + 1), lat: o.lat, lng: o.lng, src: 'OSM', osm: o.osm }); o.used = true; osmUsed++; });
+  mine(['magasin']).forEach((o, i) => { fac({ id: t.id + '-mag' + i, town: t.id, type: 'magasin', name: o.tags.name || 'Utjämningsmagasin ' + t.name + ' ' + (i + 1), lat: o.lat, lng: o.lng, src: 'OSM', osm: o.osm }); o.used = true; osmUsed++; });
+}
+facilities.forEach(f => { if (!f.src) f.src = 'fiktiv'; });
+console.log('OSM VA facilities used', osmUsed, 'of', osmVa.length);
+
 // ---------- town pipe networks ----------
 const streets = [];
 for (const t of towns) {
-  const head = p => { const a = dist(p, t.resN), b = dist(p, t.resS); return a < b ? { h: t.resN.head - a * 0.0012, res: t.resN } : { h: t.resS.head - b * 0.0012, res: t.resS }; };
+  const zones = facilities.filter(f => f.town === t.id && f.type === 'reservoar' && f.head != null);
+  const head = p => { const r = zones.reduce((b, f) => (dist(p, f) < dist(p, b) ? f : b), zones[0]); return { h: r.head - dist(p, r) * 0.0012, res: r }; };
   const sectors = t.r > 2000 ? 6 : 3, SECT = ['N', 'NO', 'SO', 'S', 'SV', 'NV'];
   const dmaName = a => sectors === 6 ? SECT[a] : ['Norr', 'Öst', 'Väst'][a];
   for (const w of t.ways) {
@@ -180,10 +217,20 @@ for (const t of towns) {
     t.booster = fac({ id: t.id + '-tst', town: t.id, type: 'booster', name: 'Tryckstegring ' + t.name, lat: nearest.lat, lng: nearest.lng, lift });
     low.forEach(s => { s.dr.pr0 = s.dr.pr; s.dr.pr = r1(Math.max(28, Math.min(65, s.dr.pr + lift))); s.dr.z = t.booster.id; });
   }
+  // avloppspumpstationer (fiktiva): the lowest street of every DMA, unless a real one is close
+  const dmaIds = [...new Set(streets.filter(s => s.t === t.id).map(s => s.dm))];
+  dmaIds.forEach(dm => {
+    const ss = streets.filter(s => s.t === t.id && s.dm === dm); if (ss.length < 4) return;
+    const low = ss.reduce((b, s) => (s.e < b.e ? s : b), ss[0]);
+    const pts = (s => { const p = s.p; let i = 0, la = 0, lg = 0; const out = []; while (i < p.length) { let b, sh = 0, r = 0; do { b = p.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); la += r & 1 ? ~(r >> 1) : r >> 1; sh = 0; r = 0; do { b = p.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); lg += r & 1 ? ~(r >> 1) : r >> 1; out.push({ lat: la / 1e5, lng: lg / 1e5 }); } return out; })(low);
+    const p = pts[Math.floor(pts.length / 2)];
+    if (facilities.some(f => f.type === 'pump' && dist(f, p) < 500)) return;
+    fac({ id: t.id + '-aps' + dm, town: t.id, type: 'pump', name: 'Avloppspumpstation ' + t.name + ' ' + low.dmn, lat: p.lat, lng: p.lng, cap: Math.round(t.prod * 0.12), src: 'fiktiv' });
+  });
   // central pump station: lowest street point in the core (spillvatten collects here)
   const core = t.nodes.filter(p => dist(p, t) < t.r * 0.5);
   const ps = core.reduce((b, p) => (elev(p) < elev(b) ? p : b), core[0] || t);
-  t.pump = fac({ id: t.id + '-ps', town: t.id, type: 'pump', name: 'Pumpstation Central', lat: ps.lat, lng: ps.lng, cap: Math.round(t.prod * 0.7) });
+  t.pump = fac({ id: t.id + '-ps', town: t.id, type: 'pump', name: 'Huvudpumpstation ' + t.name, lat: ps.lat, lng: ps.lng, cap: Math.round(t.prod * 0.7), src: 'fiktiv' });
   // bräddpunkt next to the pump station when a recipient is near
   if (nearSea(t.pump, 600) || accAt(t.pump) > 600) fac({ id: t.id + '-br1', town: t.id, type: 'bradd', name: 'Bräddpunkt ' + t.name + ' C', lat: t.pump.lat + 0.0012, lng: t.pump.lng + 0.0016 });
   fac({ id: t.id + '-br2', town: t.id, type: 'bradd', name: 'Bräddpunkt ' + t.name + ' ARV', lat: t.arv.lat + 0.0009, lng: t.arv.lng - 0.0014 });
