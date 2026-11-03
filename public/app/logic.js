@@ -26,7 +26,9 @@ class Component extends DCLogic {
     design: (() => { try { return localStorage.getItem('nsva_design') === '2' ? 2 : 1; } catch (e) { return 1; } })(),
     infoTopic: 'oversikt',
     tv: false, // skärmläget är borttaget – TV:n har touch och kör den vanliga versionen
-    view: null, // null = startmeny · 'hydra' | 'visky' | 'prod'
+    view: null, // null = startmeny · 'hydra' | 'visky' | 'prod' | 'vision'
+    visionLens: 'oversikt', // Hydra – visionen: oversikt | produktion | distribution | samhalle
+    visionTown: null, // kommun the vision has zoomed into (widgets follow it)
     viewHidden: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_hidden') || '{}'); } catch (e) { return {}; } })(),
     viewLayout: (() => { try { return JSON.parse(localStorage.getItem('nsva_view_layout') || '{}'); } catch (e) { return {}; } })(),
     filters: { skyfall: false, vind: false, alarm: false, anmal: false, regn: false, radartack: false },
@@ -1117,11 +1119,12 @@ class Component extends DCLogic {
     const byId = {}; munis.forEach(m => { byId[m.id] = m; });
     const map = L.map(this.mapEl, {
       zoomControl: false, attributionControl: true,
-      dragging: true, scrollWheelZoom: true, doubleClickZoom: true, touchZoom: true,
-      boxZoom: false, keyboard: false, tap: false, zoomSnap: 0.5, zoomDelta: 1, wheelPxPerZoomLevel: 70, wheelDebounceTime: 20, minZoom: 6, maxZoom: 14,
+      dragging: true, scrollWheelZoom: false, doubleClickZoom: true, touchZoom: true,
+      boxZoom: false, keyboard: false, tap: false, zoomSnap: 0.5, zoomDelta: 1, minZoom: 6, maxZoom: 14,
       zoomAnimation: true, fadeAnimation: true, markerZoomAnimation: true, bounceAtZoomLimits: false, inertia: true,
     });
     this.map = map;
+    this.smoothWheelZoom(map);
     L.control.zoom({ position: 'topright', zoomInTitle: 'Zooma in', zoomOutTitle: 'Zooma ut' }).addTo(map);
     // "hela området" button under the zoom control
     const Home = L.Control.extend({ options: { position: 'topright' }, onAdd: () => {
@@ -1157,6 +1160,85 @@ class Component extends DCLogic {
     setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 250);
     setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 800);
     this.applyMapFilters();
+  }
+  // Continuous wheel/trackpad zoom. Leaflet's own wheel zoom jumps in zoomSnap steps with a pause between each,
+  // so a trackpad swipe stutters and keeps zooming after the gesture. This eases toward the target every frame,
+  // the same way Leaflet's pinch zoom moves the map (tiles scale during the gesture, reload once it ends).
+  // Trackpad pinch: Chrome/Edge/Firefox send it as ctrl+wheel, Safari as its own gesture events (handled below).
+  // Touchscreen pinch is Leaflet's built-in touchZoom.
+  smoothWheelZoom(map) {
+    const L = window.L, el = map.getContainer();
+    let goal = 0, pt = null, ll = null, raf = 0, last = 0, active = false, gz = null;
+    const end = () => { cancelAnimationFrame(raf); raf = 0; if (active) { active = false; map._moveEnd(true); } };
+    const step = t => {
+      const z = map.getZoom(), d = goal - z;
+      const nz = Math.abs(d) < 0.004 ? goal : z + d * (1 - Math.exp(-Math.min(50, t - last) / 75));
+      last = t;
+      const c = map.unproject(map.project(ll, nz).subtract(pt.subtract(map.getSize().divideBy(2))), nz);
+      map._move(c, nz, { pinch: true, round: false });
+      if (nz === goal) end(); else raf = requestAnimationFrame(step);
+    };
+    // zoom toward z, keeping the spot under the pointer fixed
+    const aim = (e, z) => {
+      // re-anchor only when the pointer actually moved — re-reading every event lets pixel rounding creep in
+      const np = map.mouseEventToContainerPoint(e);
+      if (!active || np.distanceTo(pt) > 2) { pt = np; ll = map.containerPointToLatLng(pt); }
+      if (!active) { active = true; map._stop(); map._moveStart(true, false); last = performance.now(); raf = requestAnimationFrame(step); }
+      goal = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), z));
+    };
+    L.DomEvent.on(el, 'wheel', e => {
+      L.DomEvent.stop(e);
+      if (gz !== null) return; // Safari pinch in progress
+      const px = e.deltaMode === 1 ? e.deltaY * 20 : e.deltaMode === 2 ? e.deltaY * 60 : e.deltaY;
+      // trackpad pinch arrives as ctrl+wheel with small deltas — make it as responsive as a swipe
+      if (px) aim(e, (active ? goal : map.getZoom()) - px / (e.ctrlKey ? 50 : 120));
+    });
+    // Safari (Mac trackpad): e.scale is the pinch factor since gesturestart. Skipped on touch devices,
+    // where the same gesture is already handled by Leaflet's touchZoom.
+    if (!navigator.maxTouchPoints) {
+      L.DomEvent.on(el, 'gesturestart', e => { L.DomEvent.preventDefault(e); gz = active ? goal : map.getZoom(); });
+      L.DomEvent.on(el, 'gesturechange', e => { L.DomEvent.preventDefault(e); if (gz !== null) aim(e, gz + Math.log2(e.scale)); });
+      L.DomEvent.on(el, 'gestureend', e => { L.DomEvent.preventDefault(e); gz = null; });
+    }
+    map.on('dragstart', end);
+  }
+  // ---- Hydra – visionen: app/vision.js mounts into the left-column panel + map HUD once both exist ----
+  visionRef(kind, el) {
+    this['_vis' + kind] = el;
+    if (!el) { if (window.HydraVision) window.HydraVision.unmount(); this.visionBase(true); this._visOn = false; this.visionSim = null; if (this.state.visionTown) this.setState({ visionTown: null }); return; }
+    this.syncVision();
+  }
+  syncVision() {
+    if (this._visOn || !this._visPanel || !this._visHud) return;
+    if (!this.map || !window.HydraVision) { clearTimeout(this._visT); this._visT = setTimeout(() => this.syncVision(), 150); return; }
+    this._visOn = true;
+    this.visionBase(false);
+    window.HydraVision.mount({
+      map: this.map, panelEl: this._visPanel, hudEl: this._visHud, lens: this.state.visionLens,
+      rainNow: () => this.peakRainAt(0),
+      rainAt: (h) => this.peakRainAt(Math.max(0, Math.min(12, h))),
+      seaCm: () => { try { return this.seaLevel().maxCm; } catch (e) { return 0; } },
+      sea: () => { try { return this.seaLevel().stations; } catch (e) { return []; } },
+      gauges: () => {
+        const live = this.rainHistStations && this.rainHistStations.length;
+        const list = live ? this.rainHistStations : this.rainStations().map(g => Object.assign({ src: 'SIM' }, g));
+        return list.map(g => ({ id: g.id || g.name, name: g.name, lat: g.lat, lng: g.lng, src: g.src, now: g.src === 'SIM' ? this.simRainAt(g.lat, g.lng, 0) : this.gaugeVal(g, 0) }));
+      },
+      stormF: (id) => this.stormF(id),
+      filters: () => this.state.filters,
+      toggleFilter: (k) => this.toggleFilter(k),
+      openWidget: (id) => this.openWidgetDetail(id),
+      onLens: (l) => this.setState({ visionLens: l }),
+      onTown: (id) => this.setState({ visionTown: id || null }),
+      // simulation state for the widgets: the dashboard's own 2 s tick re-renders them; only a start/stop renders right away
+      onSim: (vs) => { const was = !!(this.visionSim && this.visionSim.active); this.visionSim = vs; if (was !== !!vs.active) this.setState(s => ({ tick: s.tick })); },
+    });
+  }
+  // the overview's straight kommun-to-kommun lines are replaced by the routed trunks in the vision
+  visionBase(show) {
+    if (!this.map || !this.connLayer) return;
+    if (show && !this.map.hasLayer(this.connLayer)) this.connLayer.addTo(this.map);
+    if (!show && this.map.hasLayer(this.connLayer)) this.map.removeLayer(this.connLayer);
   }
   // Real municipality borders for the 8 NSVA kommuner — pre-clipped to the coastline (no sea overshoot), embedded via kommuner.js.
   loadBoundaries(L, map) {
@@ -1713,9 +1795,10 @@ class Component extends DCLogic {
     const L = window.L;
     const m = this.baseMunis().find(x => x.id === sel); if (!m) return;
     const map = L.map(this.detailEl, {
-      zoomControl: false, attributionControl: false, scrollWheelZoom: true,
+      zoomControl: false, attributionControl: false, scrollWheelZoom: false,
       dragging: true, doubleClickZoom: true, fadeAnimation: false,
     });
+    this.smoothWheelZoom(map);
     this.detailMap = map; this.detailMapEl = this.detailEl; this.detailMapFor = sel;
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, maxNativeZoom: 16 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -1799,7 +1882,9 @@ class Component extends DCLogic {
     });
     const order = { KRITISK: 0, VARNING: 1, INFO: 2 };
     rain.sort((a, b) => order[a.sev] - order[b.sev]);
-    return rain.concat(this.baseAlarms());
+    // alarms raised by the twin's simulation (bräddning, dämda ledningar, fulla lågpunkter) come first
+    const vis = this.state.view === 'vision' && this.visionSim && this.visionSim.active ? (this.visionSim.alarms || []) : [];
+    return vis.concat(rain, this.baseAlarms());
   }
   sevColor(s) { return s === 'KRITISK' ? '#ff5a6e' : s === 'VARNING' ? '#ffb547' : '#35d6f2'; }
   sevBg(s) { return s === 'KRITISK' ? 'rgba(255,90,110,.08)' : s === 'VARNING' ? 'rgba(255,181,71,.07)' : 'rgba(53,214,242,.06)'; }
@@ -1880,7 +1965,8 @@ class Component extends DCLogic {
     };
     return G[id] || null;
   }
-  selectMuni(id) { this.setState({ selected: id, selFac: null }); }
+  // in the vision a kommun opens on the twin map itself instead of the drill-down overlay
+  selectMuni(id) { if (this.state.view === 'vision' && window.HydraVision && window.HydraVision.focusTown(id)) return; this.setState({ selected: id, selFac: null }); }
   selectFac(idx) { this.setState({ selFac: idx }); }
   backFac() { this.setState({ selFac: null }); }
   back() { this.setState({ selected: null, selFac: null }); }
@@ -2217,7 +2303,7 @@ class Component extends DCLogic {
       closeWidget: async () => { this.closeWidgetDetail(); return 'Stängde detaljvyn'; },
       setView: async (p) => {
         const s = String((p && (p.vy || p.view || p.name)) || '').toLowerCase();
-        const v = /skyfall|visky|regn|nederb/.test(s) ? 'visky' : /prod|dricks|flöd|flod/.test(s) ? 'prod' : /meny|start/.test(s) ? null : 'hydra';
+        const v = /vision|tvilling|framtid/.test(s) ? 'vision' : /skyfall|visky|regn|nederb/.test(s) ? 'visky' : /prod|dricks|flöd|flod/.test(s) ? 'prod' : /meny|start/.test(s) ? null : 'hydra';
         if (v === null) { this.setState({ view: null }); return 'Visar startmenyn'; }
         this.setView(v); return 'Visar ' + this.viewDefs()[v].title;
       },
@@ -3190,6 +3276,15 @@ class Component extends DCLogic {
       prod: { title: 'PRODUKTION · DRICKSVATTEN', sub: 'Flödesmätare · ledningsnät och pumpstationer',
         cols: { left: ['flode'], right: ['dricks', 'alarm'] },
         filters: ['alarm'], autoOn: [] },
+      // left column = the vision panel (app/vision.js); right column = today's widgets for the chosen lens
+      vision: { title: 'HYDRA · VISIONEN', sub: 'Digital tvilling · produktion · distribution · samhällsutveckling',
+        cols: { left: [], right: ({
+          oversikt: ['ai', 'alarm', 'flode', 'dricks', 'spill', 'dag', 'prognos', 'radar', 'matare', 'anmal', 'hav'],
+          produktion: ['dricks', 'flode', 'alarm', 'ai'],
+          distribution: ['flode', 'spill', 'dag', 'alarm', 'anmal'],
+          samhalle: ['prognos', 'hav', 'dag', 'anmal', 'radar'],
+        })[this.state.visionLens] || [] },
+        filters: [], autoOn: [] },
     };
   }
   setView(v) {
@@ -3203,7 +3298,7 @@ class Component extends DCLogic {
   // Module views start with their focused default columns, but the user may add any other widget (saved per view)
   viewColsEff(v) {
     const d = this.viewDefs()[v];
-    const o = (this.state.viewLayout || {})[v];
+    const o = v === 'vision' ? null : (this.state.viewLayout || {})[v]; // vision follows the lens, no saved layout
     // a saved layout from before the Regnmätare widget existed → add it at the top of the right column
     if (o && v === 'visky' && !o.left.includes('matare') && !o.right.includes('matare')) return { left: o.left, right: ['matare'].concat(o.right) };
     return o ? o : (d && d.cols ? d.cols : null);
@@ -3236,7 +3331,11 @@ class Component extends DCLogic {
       dim: this.state.dragId && this.state.dragId !== id && this.state.dragActive ? '0.62' : '1',
       onDown: (e) => this.startDrag(id, e),
       onClick: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
-      open: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; } this.openWidgetDetail(id, this.zoomFrom(e)); },
+      open: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation(); if (this._wasDrag) { this._wasDrag = false; return; }
+        if (this.state.view === 'vision' && window.HydraVision && window.HydraVision.focusWidget(id)) return;
+        this.openWidgetDetail(id, this.zoomFrom(e));
+      },
       hide: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (e && e.preventDefault) e.preventDefault(); if (this.viewCol(id)) this.toggleWidget(id); },
       hideDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
     };
@@ -3388,8 +3487,19 @@ class Component extends DCLogic {
         { name: 'Helsingborg · Ringstorp', v: this.j(81, 1.2, 2) },
       ];
     }
+    // Hydra – visionen: while its skyfall simulation runs, spill/dag show the simulated state of the twin
+    const vs = this.state.view === 'vision' && this.visionSim && this.visionSim.active ? this.visionSim : null;
+    let vsOver = false;
+    if (vs) {
+      const ids = sel ? [sel] : baseM.map(m => m.id), T = id => vs.towns[id] || {};
+      spillFlow = ids.reduce((a, id) => a + (T(id).q || 0), 0);
+      pumpLvl = Math.min(100, Math.max(...ids.map(id => (T(id).load || 0) * 82)));
+      magLvl = Math.min(100, ids.reduce((a, id) => a + (T(id).fill || 0), 0) / ids.length);
+      dagFlow = ids.reduce((a, id) => a + byId[id].prod * (0.12 + 1.2 * Math.min(1, vs.rain / 45)), 0);
+      vsOver = ids.some(id => T(id).overflowing);
+    }
     const drinkOK = turb < 0.5;
-    const bradd = (magLvl > 85 || pumpLvl > 88) ? 'AKTIV' : ((sf >= 0.6 || pumpLvl > 70) ? 'RISK' : 'NEJ');
+    const bradd = (vsOver || magLvl > 85 || pumpLvl > 88) ? 'AKTIV' : ((sf >= 0.6 || pumpLvl > 70) ? 'RISK' : 'NEJ');
     const braddColor = bradd === 'AKTIV' ? '#ff5a6e' : bradd === 'RISK' ? '#ffb547' : '#2fe6c4';
     const dagStatus = magLvl > 85 ? 'KRITISK' : magLvl > 65 ? 'HÖG' : 'NORMAL';
     const dagColor = magLvl > 85 ? '#ff5a6e' : magLvl > 65 ? '#ffb547' : '#2fe6c4';
@@ -4285,8 +4395,10 @@ class Component extends DCLogic {
 
     // alarms (filtered when a municipality is selected)
     const sel = this.state.selected;
+    // widget data follows the drill-down, or in the vision the kommun it has zoomed into
+    const wsel = sel || (this.state.view === 'vision' ? this.state.visionTown : null);
     const baseA = this.currentAlarms();
-    const alarmsRaw = sel ? baseA.filter(a => a.muni === sel) : baseA;
+    const alarmsRaw = wsel ? baseA.filter(a => a.muni === wsel) : baseA;
     const alarms = alarmsRaw.map(a => ({
       sev: a.sev, msg: a.msg, time: a.time, muniName: this.muniName(a.muni),
       color: this.sevColor(a.sev), bg: this.sevBg(a.sev), border: this.sevBorder(a.sev),
@@ -4398,13 +4510,13 @@ class Component extends DCLogic {
 
       radarCells, forecast,
 
-      sys: this.systems(sel),
+      sys: this.systems(wsel),
       sea: this.seaLevel(),
       wdet: this.widgetDetailData(),
       prog: this.prognos(),
-      aiList: this.aiNotices(sel),
-      aiCount: this.aiNotices(sel).length,
-      noAi: sel && this.aiNotices(sel).length === 0,
+      aiList: this.aiNotices(wsel),
+      aiCount: this.aiNotices(wsel).length,
+      noAi: wsel && this.aiNotices(wsel).length === 0,
       wind: this.wind(),
       radarMmh: this.weather ? (Math.round(this.weather.maxP * 10) / 10).toString().replace('.', ',') + ' mm/h' : '32 mm/h',
       radarMmhColor: this.rainHex(this.weather ? (this.weather.maxP || 0) : 32),
@@ -4445,7 +4557,7 @@ class Component extends DCLogic {
         matare: this.widgetCtl('matare'),
       },
       rg: this.gaugeWidget(),
-      anm: this.reportsSummary(sel),
+      anm: this.reportsSummary(wsel),
       colLeft: this.colDropCtl('left'),
       colRight: this.colDropCtl('right'),
       settingsOpen: this.state.settingsOpen,
@@ -4457,10 +4569,16 @@ class Component extends DCLogic {
       tvDx: (() => { const a = (this.wind().arrowDeg || 0) * Math.PI / 180; return Math.round(Math.sin(a) * 26); })(),
       tvDy: (() => { const a = (this.wind().arrowDeg || 0) * Math.PI / 180; return Math.round(-Math.cos(a) * 26); })(),
       clockShort: (this.state.clock || '').slice(0, 5) + ' · live',
-      showClickHint: !sel && !this.state.tv,
+      showClickHint: !sel && !this.state.tv && this.state.view !== 'vision',
+      isVision: this.state.view === 'vision',
+      visionPanelRef: this._visPanelRefFn || (this._visPanelRefFn = (el) => this.visionRef('Panel', el)),
+      visionHudRef: this._visHudRefFn || (this._visHudRefFn = (el) => this.visionRef('Hud', el)),
+      visionHudDisplay: sel ? 'none' : 'block',
+      showMapTitle: isOverview && this.state.view !== 'vision',
+      showMapFilters: !this.state.tv && this.state.view !== 'vision',
       viewHasSkyfall: (() => { const d = this.viewDefs()[this.state.view || 'hydra']; return !d.filters || d.filters.includes('skyfall'); })(),
       // per-view map overlays: Visky = nederbörd + havsvattenstånd (no SCADA status); Produktion = no sea gauge
-      showStatusOverlay: !sel && this.state.view !== 'visky',
+      showStatusOverlay: !sel && this.state.view !== 'visky' && this.state.view !== 'vision',
       showSeaGauge: !sel && ['hydra', 'visky'].includes(this.state.view || 'hydra'),
       viewTitle: this.viewDefs()[this.state.view || 'hydra'].title,
       viewSub: this.viewDefs()[this.state.view || 'hydra'].sub,
@@ -4469,6 +4587,7 @@ class Component extends DCLogic {
       openHydra: () => this.leave('menu', () => this.setView('hydra')),
       openVisky: () => this.leave('menu', () => this.setView('visky')),
       openProd: () => this.leave('menu', () => this.setView('prod')),
+      openVision: () => this.leave('menu', () => this.setView('vision')),
       // 'mo-out' while an overlay plays its exit animation
       mo: { wdet: L.wdet ? 'mo-out' : '', gd: L.gd ? 'mo-out' : '', rd: L.rd ? 'mo-out' : '', evd: L.evd ? 'mo-out' : '', settings: L.settings ? 'mo-out' : '', menu: L.menu ? 'mo-out' : '' },
       widgetMenu: this.widgetMenu(),
@@ -4506,7 +4625,7 @@ class Component extends DCLogic {
       filters: this.state.filters,
       skyfallScanning: this.state.skyfallScan,
       skyfallNoResult: this.state.skyfallResult === 'none',
-      skyfallScrubber: true, // always visible at the bottom of the map
+      skyfallScrubber: this.state.view !== 'vision', // always visible at the bottom of the map (the vision has its own simulation bar)
       sv: this.skyfallScrubVals(),
       toggleSkyMode: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState(s => ({ skyfallMode: s.skyfallMode === 'int' ? 'rp' : 'int' })); },
       skyIntBoxBg: this.state.skyfallMode === 'int' ? '#ff9a2e' : 'rgba(8,22,30,.6)',
